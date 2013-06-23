@@ -6,7 +6,6 @@ package policyboosting;
 import jeigen.DenseMatrix;
 import jeigen.DenseMatrix.SvdResult;
 import jeigen.JeigenJna;
-import jeigen.SparseMatrixLil;
 
 /**
  *
