@@ -21,7 +21,7 @@ public class Policyboosting {
         System.setProperty("java.library.path", "./lib");
         JeigenJna.Jeigen.loadLibrary();
 
-        DenseMatrix dm3 = DenseMatrix.rand(1000, 1000);
+        DenseMatrix dm3 = DenseMatrix.rand(100, 100);
         SvdResult result3 = dm3.svd();
     }
 }
