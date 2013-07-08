@@ -1,0 +1,34 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package core;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Random;
+
+/**
+ *
+ * @author daq
+ */
+public abstract class MetaPolicy implements Serializable {
+
+    protected int numIteration;
+    protected Random random;
+
+    public abstract Action makeDecisionS(State s, Task t, Random random);
+    public abstract Action makeDecisionD(State s, Task t, Random random);
+
+    public abstract void update(List<Rollout> rollouts);
+
+    public int getNumIteration() {
+        return numIteration;
+    }
+
+    public abstract void setNumIteration(int numIteration);
+
+    public Random getRandom() {
+        return random;
+    }
+}
