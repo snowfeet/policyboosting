@@ -5,6 +5,8 @@
 package domain.mountaincar2d;
 
 import core.Action;
+import core.CSDATask;
+import core.DiscreteAction;
 import core.State;
 import core.Task;
 import java.util.Random;
@@ -13,7 +15,7 @@ import java.util.Random;
  *
  * @author daq
  */
-public class MountainCarTask extends Task {
+public class MountainCarTask extends CSDATask {
 
     final public double minPosition = -1.2;
     final public double maxPosition = 0.6;
@@ -32,15 +34,18 @@ public class MountainCarTask extends Task {
     private Random random;
 
     public MountainCarTask(Random rand) {
-        this.actionSet = new int[]{0, 1, 2};
-        this.random = rand;
+        this.random = random;
+        this.actions = new Action[3];
+        for (int a = 0; a < 3; a++) {
+            actions[a] = new DiscreteAction(a);
+        }
     }
 
     @Override
-    public State transition(State s, Action a, Random outRand) {
+    public State transition(State s, Action action, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
         MountainCarState cs = (MountainCarState) s;
-        int move = actionSet[a.index];
+        int move = ((DiscreteAction) action).a;
 
         double acceleration = accelerationFactor;
         double position = cs.position;
@@ -83,14 +88,6 @@ public class MountainCarTask extends Task {
         }
     }
 
-    public double[] getSAFeature(State s, Action a) {
-        double[] feature = s.extractFeature();
-        double[] saFea = new double[feature.length + 1];
-        System.arraycopy(feature, 0, saFea, 0, feature.length);
-        saFea[saFea.length - 1] = a.index;
-        return saFea;
-    }
-
     @Override
     public boolean isComplete(State s) {
         MountainCarState cs = (MountainCarState) s;
@@ -105,25 +102,5 @@ public class MountainCarTask extends Task {
     public State getInitialState() {
         return new MountainCarState(defaultInitPosition + 0.5d * (random.nextDouble() - .5d),
                 defaultInitVelocity + .12d * (random.nextDouble() - .5d));
-    }
-
-    @Override
-    public State transition(State s, Action a, Random outRand) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double immediateReward(State s) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public double[] getSATFeature(State s, Action a) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean isComplete(State s) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
