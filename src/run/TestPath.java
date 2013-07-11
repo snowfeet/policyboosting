@@ -4,9 +4,9 @@
  */
 package run;
 
-import core.Execution;
+import experiment.Execution;
 import core.Task;
-import core.Tuple;
+import experiment.Tuple;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.ArrayList;

@@ -4,11 +4,11 @@
  */
 package run;
 
-import core.Execution;
+import experiment.Execution;
 import core.State;
 import core.Task;
 import core.TaskSet;
-import core.Tuple;
+import experiment.Tuple;
 import java.util.List;
 import java.util.Random;
 import domain.mountaincar3d.MCar3DTask;

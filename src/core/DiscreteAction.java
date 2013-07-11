@@ -8,5 +8,11 @@ package core;
  *
  * @author daq
  */
-public interface Action {
+public class DiscreteAction implements Action {
+
+    public int a;
+
+    public DiscreteAction(int a) {
+        this.a = a;
+    }
 }

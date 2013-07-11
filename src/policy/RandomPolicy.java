@@ -6,7 +6,7 @@ package policy;
 
 import core.Action;
 import core.MetaPolicy;
-import core.Rollout;
+import experiment.Rollout;
 import core.State;
 import core.Task;
 import java.util.List;

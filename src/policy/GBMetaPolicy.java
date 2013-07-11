@@ -6,10 +6,10 @@ package policy;
 
 import core.Action;
 import core.MetaPolicy;
-import core.Rollout;
+import experiment.Rollout;
 import core.State;
 import core.Task;
-import core.Tuple;
+import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;

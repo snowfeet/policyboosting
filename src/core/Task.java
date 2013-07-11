@@ -11,17 +11,13 @@ import java.util.Random;
  *
  * @author daq
  */
-public abstract class Task implements Serializable{
+public abstract class Task implements Serializable {
 
-    public int taskDimension;
-    public double[] taskParameter;
-    public int[] actionSet;
+    public abstract State getInitialState();
 
     public abstract State transition(State s, Action a, Random outRand);
 
     public abstract double immediateReward(State s);
-
-    public abstract double[] getSATFeature(State s, Action a);
 
     public abstract boolean isComplete(State s);
 }

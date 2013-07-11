@@ -4,7 +4,7 @@
  */
 package run;
 
-import core.Experiment;
+import experiment.Experiment;
 import core.State;
 import core.Task;
 import domain.mountaincar3d.MCar3DTask;

@@ -4,7 +4,7 @@
  */
 package run;
 
-import core.Experiment;
+import experiment.Experiment;
 import core.Task;
 import java.awt.geom.Point2D;
 import java.io.IOException;

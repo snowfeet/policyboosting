@@ -8,5 +8,11 @@ package core;
  *
  * @author daq
  */
-public interface Action {
+public class ContinuousAction implements Action {
+
+    public double a;
+
+    public ContinuousAction(double a) {
+        this.a = a;
+    }
 }

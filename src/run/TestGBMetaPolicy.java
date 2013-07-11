@@ -4,7 +4,7 @@
  */
 package run;
 
-import core.Experiment;
+import experiment.Experiment;
 import core.Task;
 import domain.cwk.CrwState;
 import domain.cwk.CrwTask;
