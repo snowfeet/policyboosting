@@ -5,7 +5,7 @@
 package policy;
 
 import core.Action;
-import core.MetaPolicy;
+import core.Policy;
 import experiment.Rollout;
 import core.State;
 import core.Task;
@@ -16,7 +16,7 @@ import java.util.Random;
  *
  * @author daq
  */
-public class RandomPolicy extends MetaPolicy {
+public class RandomPolicy extends Policy {
 
     Random random;
 
