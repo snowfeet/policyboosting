@@ -4,6 +4,7 @@
  */
 package experiment;
 
+import core.EpsionGreedyExplorePolicy;
 import core.Policy;
 import core.State;
 import core.Task;
@@ -58,12 +59,13 @@ public class Experiment {
             System.out.println("iter=" + iter);
             System.out.println("collecting samples...");
 
+            Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, 0.05, new Random(random.nextInt()));
             List<ParallelExecute> list = new ArrayList<ParallelExecute>();
 
             ExecutorService exec = Executors.newFixedThreadPool(
                     Runtime.getRuntime().availableProcessors() - 1);
             for (int i = 0; i < trialsPerIter; i++) {
-                ParallelExecute run = new ParallelExecute(task, policy,
+                ParallelExecute run = new ParallelExecute(task, explorePolicy,
                         initialState, maxStep, true, random.nextInt());
                 list.add(run);
                 if (isPara && iter > 0) {

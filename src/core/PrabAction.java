@@ -10,7 +10,7 @@ package core;
  */
 public class PrabAction extends Action {
 
-    double probability;
+    public double probability;
 
     public PrabAction(int a, double probability) {
         super(a);

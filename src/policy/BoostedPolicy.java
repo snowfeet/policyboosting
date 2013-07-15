@@ -58,72 +58,60 @@ public class BoostedPolicy extends Policy {
 
     @Override
     public Action makeDecisionD(State s, Task t, Random outRand) {
-        Random thisRand = outRand == null ? random : outRand;
+        if (numIteration == 0) {
+            return null;
+        }
+
         int K = t.actions.length;
 
-        if (numIteration == 0) {
-            return rp.makeDecisionS(s, t, thisRand);
-        } else {
-            double[] utilities = getUtility(s, t);
+        double[] utilities = getUtility(s, t);
 
-            int bestAction = 0;
-            for (int k = 1; k < K; k++) {
-                if (utilities[k] > utilities[bestAction]) {
-                    bestAction = k;
-                }
+        int bestAction = 0;
+        for (int k = 1; k < K; k++) {
+            if (utilities[k] > utilities[bestAction]) {
+                bestAction = k;
             }
-
-            return new Action(bestAction);
         }
+
+        return new Action(bestAction);
     }
 
     @Override
     public PrabAction makeDecisionS(State s, Task t, Random outRand) {
-        Random thisRand = outRand == null ? random : outRand;
-        int K = t.actionSet.length;
-        double epsion = 0.05;
-        if (numIteration == 0 || thisRand.nextDouble() < epsion) {
-            return rp.makeDecisionS(s, t, thisRand);
-        } else {
-            double[] utilities = getUtility(s, t);
-
-//            int bestAction = -1;
-//            double p = thisRand.nextDouble(), totalShare = 0;
-//            for (int k = 0; k < K; k++) {
-//                totalShare += utilities[k];
-//                if (p <= totalShare) {
-//                    bestAction = k;
-//                    break;
-//                }
-//            }
-
-            int bestAction = 0, m = 2;
-            for (int k = 1; k < K; k++) {
-                if (utilities[k] > utilities[bestAction] + Double.MIN_VALUE) {
-                    bestAction = k;
-                    m = 2;
-                } else if (Math.abs(utilities[k] - utilities[bestAction]) <= Double.MIN_VALUE) {
-                    if (thisRand.nextDouble() < 1.0 / m) {
-                        bestAction = k;
-                    }
-                    m++;
-                }
-            }
-
-            return new PrabAction(bestAction, utilities[bestAction]);
+        if (numIteration == 0) {
+            return null;
         }
+
+        Random thisRand = outRand == null ? random : outRand;
+        int K = t.actions.length;
+
+        double[] utilities = getUtility(s, t);
+
+        int bestAction = 0, m = 2;
+        for (int k = 1; k < K; k++) {
+            if (utilities[k] > utilities[bestAction] + Double.MIN_VALUE) {
+                bestAction = k;
+                m = 2;
+            } else if (Math.abs(utilities[k] - utilities[bestAction]) <= Double.MIN_VALUE) {
+                if (thisRand.nextDouble() < 1.0 / m) {
+                    bestAction = k;
+                }
+                m++;
+            }
+        }
+
+        return new PrabAction(bestAction, utilities[bestAction]);
     }
 
     public double[] getUtility(State s, Task t) {
-        int K = t.actionSet.length;
+        int K = t.actions.length;
         double[] utilities = new double[K];
         double maxUtility = Double.NEGATIVE_INFINITY;
         for (int k = 0; k < K; k++) {
-            double[] stateActionTaskFeature = t.getSATFeature(s, new Action(k));
-            Instance ins = contructInstance(stateActionTaskFeature, 0);
+            double[] stateActionFeature = t.getSAFeature(s, new Action(k));
+            Instance ins = contructInstance(stateActionFeature, 0);
             if (null == dataHead) {
-                int na = t.actionSet.length;
-                dataHead = constructDataHead(stateActionTaskFeature.length, na);
+                dataHead = constructDataHead(stateActionFeature.length, K);
             }
             ins.setDataset(dataHead);
             utilities[k] = 0;
@@ -194,8 +182,9 @@ public class BoostedPolicy extends Policy {
                 Tuple sample = samples.get(step);
                 E = gamma * E + sample.reward;
 
-                features.add(task.getSATFeature(sample.s, sample.a));
-                labels.add(sample.a.value * (1 - sample.a.value) * E);
+                features.add(task.getSAFeature(sample.s, sample.a));
+                double prab = ((PrabAction)sample.a).probability;
+                labels.add(prab * (1 - prab) * E);
 
 //                if (E > -500) {
 //                    double[] feature = sample.s.extractFeature();
@@ -207,7 +196,7 @@ public class BoostedPolicy extends Policy {
         }
 
         if (null == dataHead) {
-            int na = rollouts.get(0).task.actionSet.length;
+            int na = rollouts.get(0).task.actions.length;
             dataHead = constructDataHead(features.get(0).length, na);
         }
         Instances data = new Instances(dataHead, features.size());
