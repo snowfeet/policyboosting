@@ -6,6 +6,7 @@ package policy;
 
 import core.Action;
 import core.Policy;
+import core.PrabAction;
 import experiment.Rollout;
 import core.State;
 import core.Task;
@@ -25,9 +26,9 @@ public class RandomPolicy extends Policy {
     }
 
     @Override
-    public Action makeDecisionS(State s, Task t, Random outRand) {
+    public PrabAction makeDecisionS(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
-        int K = t.actionSet.length;
+        int K = t.actions.length;
 
         double[] utilities = new double[K];
         double norm = 0;
@@ -49,14 +50,14 @@ public class RandomPolicy extends Policy {
             }
         }
 
-        return new Action(bestAction, utilities[bestAction]);
+        return new PrabAction(bestAction, utilities[bestAction]);
     }
 
     @Override
     public Action makeDecisionD(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
-        int K = t.actionSet.length;
-        return new Action(thisRand.nextInt(K), 1);
+        int K = t.actions.length;
+        return new Action(thisRand.nextInt(K));
     }
 
     @Override

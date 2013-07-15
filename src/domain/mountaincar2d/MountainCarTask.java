@@ -5,8 +5,7 @@
 package domain.mountaincar2d;
 
 import core.Action;
-import core.CSDATask;
-import core.DiscreteAction;
+import core.Task;
 import core.State;
 import core.Task;
 import java.util.Random;
@@ -15,7 +14,7 @@ import java.util.Random;
  *
  * @author daq
  */
-public class MountainCarTask extends CSDATask {
+public class MountainCarTask extends Task {
 
     final public double minPosition = -1.2;
     final public double maxPosition = 0.6;
@@ -37,7 +36,7 @@ public class MountainCarTask extends CSDATask {
         this.random = random;
         this.actions = new Action[3];
         for (int a = 0; a < 3; a++) {
-            actions[a] = new DiscreteAction(a);
+            actions[a] = new Action(a);
         }
     }
 
@@ -45,13 +44,12 @@ public class MountainCarTask extends CSDATask {
     public State transition(State s, Action action, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
         MountainCarState cs = (MountainCarState) s;
-        int move = ((DiscreteAction) action).a;
+        int move = action.a;
 
         double acceleration = accelerationFactor;
         double position = cs.position;
         double velocity = cs.velocity;
-//System.out.print(move+" "+position+"\t");
-        //Noise should be at most
+        
         double thisNoise = 2.0d * accelerationFactor * transitionNoise * (thisRand.nextDouble() - .5d);
 
         velocity += (thisNoise + ((move - 1)) * (acceleration)) + getSlope(position) * (gravityFactor);

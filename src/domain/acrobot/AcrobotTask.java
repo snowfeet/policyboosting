@@ -7,14 +7,13 @@ package domain.acrobot;
 import java.util.Random;
 import core.Action;
 import core.State;
-import core.CSDATask;
-import core.DiscreteAction;
+import core.Task;
 
 /**
  *
  * @author daq
  */
-public class AcrobotTask extends CSDATask {
+public class AcrobotTask extends Task {
 
     private final static double maxTheta1Dot = 4 * Math.PI;
     private final static double maxTheta2Dot = 9 * Math.PI;
@@ -36,7 +35,7 @@ public class AcrobotTask extends CSDATask {
         this.random = random;
         this.actions = new Action[3];
         for(int a=0;a<3;a++)
-            actions[a] = new DiscreteAction(a);
+            actions[a] = new Action(a);
     }
 
     @Override
@@ -49,7 +48,7 @@ public class AcrobotTask extends CSDATask {
         double theta1Dot = as.theta1Dot;
         double theta2Dot = as.theta2Dot;
 
-        int theAction = ((DiscreteAction)action).a;
+        int theAction = action.a;
         double torque = theAction - 1.0d;
         double d1;
         double d2;

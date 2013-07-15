@@ -21,19 +21,24 @@ public class Execution {
     public static List<Tuple> runTaskWithFixedStep(Task task, State initalState, Policy policy, int maxStep, boolean isStochastic, Random random) {
         List<Tuple> samples = new ArrayList<Tuple>();
 
-        State s = initalState;
+        State s = null;
+        Action action = null;
+        State sPrime = initalState;
+        double reward = Double.NEGATIVE_INFINITY;
+
         int step = 0;
         while (step < maxStep) {
-            Action action = isStochastic ? policy.makeDecisionS(s, task, random) : policy.makeDecisionD(s, task, random);
-            State sPrime = task.transition(s, action, random);
-            double reward = task.immediateReward(sPrime);
-            samples.add(new Tuple(s, action, reward, sPrime));
+            if (!task.isComplete(sPrime)) {
+                s = sPrime;
 
-            s = sPrime;
+                action = isStochastic ? policy.makeDecisionS(s, task, random) : policy.makeDecisionD(s, task, random);
+                sPrime = task.transition(s, action, random);
+                reward = task.immediateReward(sPrime);
+                samples.add(new Tuple(s, action, reward, sPrime));
+            } else {
+                samples.add(new Tuple(s, action, reward, sPrime));
+            }
             step = step + 1;
-            
-            if(task.isComplete(s))
-                break;
         }
 
         return samples;

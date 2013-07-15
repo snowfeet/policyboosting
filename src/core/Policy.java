@@ -18,7 +18,8 @@ public abstract class Policy implements Serializable {
     protected int numIteration;
     protected Random random;
 
-    public abstract Action makeDecisionS(State s, Task t, Random random);
+    public abstract PrabAction makeDecisionS(State s, Task t, Random random);
+
     public abstract Action makeDecisionD(State s, Task t, Random random);
 
     public abstract void update(List<Rollout> rollouts);

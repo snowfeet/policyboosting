@@ -8,5 +8,11 @@ package core;
  *
  * @author daq
  */
-public interface Action {
+public class Action {
+
+    public int a;
+
+    public Action(int a) {
+        this.a = a;
+    }
 }

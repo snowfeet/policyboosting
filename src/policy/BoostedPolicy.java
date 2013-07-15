@@ -5,7 +5,8 @@
 package policy;
 
 import core.Action;
-import core.MetaPolicy;
+import core.Policy;
+import core.PrabAction;
 import experiment.Rollout;
 import core.State;
 import core.Task;
@@ -24,7 +25,7 @@ import weka.core.Instances;
  *
  * @author daq
  */
-public class GBMetaPolicy extends MetaPolicy {
+public class BoostedPolicy extends Policy {
 
     private RandomPolicy rp;
     private List<Double> alphas;
@@ -33,7 +34,7 @@ public class GBMetaPolicy extends MetaPolicy {
     private double stepsize;
     private Instances dataHead = null;
 
-    public GBMetaPolicy(Random rand) {
+    public BoostedPolicy(Random rand) {
         rp = new RandomPolicy(new Random());
         numIteration = 0;
         alphas = new ArrayList<Double>();
@@ -58,7 +59,7 @@ public class GBMetaPolicy extends MetaPolicy {
     @Override
     public Action makeDecisionD(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
-        int K = t.actionSet.length;
+        int K = t.actions.length;
 
         if (numIteration == 0) {
             return rp.makeDecisionS(s, t, thisRand);
@@ -66,19 +67,18 @@ public class GBMetaPolicy extends MetaPolicy {
             double[] utilities = getUtility(s, t);
 
             int bestAction = 0;
-            double p = thisRand.nextDouble(), totalShare = 0;
             for (int k = 1; k < K; k++) {
                 if (utilities[k] > utilities[bestAction]) {
                     bestAction = k;
                 }
             }
 
-            return new Action(bestAction, utilities[bestAction]);
+            return new Action(bestAction);
         }
     }
 
     @Override
-    public Action makeDecisionS(State s, Task t, Random outRand) {
+    public PrabAction makeDecisionS(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
         int K = t.actionSet.length;
         double epsion = 0.05;
@@ -110,7 +110,7 @@ public class GBMetaPolicy extends MetaPolicy {
                 }
             }
 
-            return new Action(bestAction, utilities[bestAction]);
+            return new PrabAction(bestAction, utilities[bestAction]);
         }
     }
 
@@ -190,7 +190,7 @@ public class GBMetaPolicy extends MetaPolicy {
             List<Tuple> samples = rollout.samples;
 
             double E = 0;
-            for (int step = samples.size() - 1; step >= Math.max(0,samples.size() - 1000); step--) {
+            for (int step = samples.size() - 1; step >= Math.max(0, samples.size() - 1000); step--) {
                 Tuple sample = samples.get(step);
                 E = gamma * E + sample.reward;
 
