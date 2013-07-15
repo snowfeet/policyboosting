@@ -186,12 +186,6 @@ public class BoostedPolicy extends Policy {
                 double prab = ((PrabAction)sample.a).probability;
                 labels.add(prab * (1 - prab) * E);
 
-//                if (E > -500) {
-//                    double[] feature = sample.s.extractFeature();
-//                    System.out.print(feature[0]+" "+feature[1]+" "+feature[2]+" "+feature[3]);
-//                    System.out.print(E + " ");
-//                    System.out.println(sample.a.value);
-//                }
             }
         }
 
