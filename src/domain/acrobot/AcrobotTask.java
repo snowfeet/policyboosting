@@ -108,9 +108,9 @@ public class AcrobotTask extends Task {
     @Override
     public double immediateReward(State s) {
         if (isComplete(s)) {
-            return 0;
+            return 1;
         } else {
-            return -1;
+            return 0;
         }
     }
 
