@@ -22,11 +22,14 @@ public class Rollout {
     }
 
     public double getAvaReward() {
-        double avaReward = 0;
+        return getReward() / samples.size();
+    }
+
+    double getReward() {
+        double rewards = 0;
         for (Tuple t : samples) {
-            avaReward += t.reward;
+            rewards += t.reward;
         }
-        avaReward /= samples.size();
-        return avaReward;
+        return rewards;
     }
 }

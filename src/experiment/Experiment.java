@@ -85,9 +85,17 @@ public class Experiment {
             }
 
             List<Rollout> rollouts = new ArrayList<Rollout>();
+            double averageReward = 0;
             for (ParallelExecute run : list) {
-                rollouts.add(run.getRollout());
+                Rollout rollout = run.getRollout();
+                rollouts.add(rollout);
+                
+                double totalReward = rollout.getReward();
+                averageReward += totalReward;
+                System.out.print(totalReward+" ");                
             }
+            averageReward /= list.size();
+            System.out.print("\nAverage Total Rewards = "+averageReward);   
             System.out.println();
             System.out.println("collecting samples is done! Updating meta-policy...");
             policy.update(rollouts);
