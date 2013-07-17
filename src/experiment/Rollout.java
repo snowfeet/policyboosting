@@ -25,7 +25,7 @@ public class Rollout {
         return getReward() / samples.size();
     }
 
-    double getReward() {
+    public double getReward() {
         double rewards = 0;
         for (Tuple t : samples) {
             rewards += t.reward;

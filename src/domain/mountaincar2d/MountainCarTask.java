@@ -99,6 +99,6 @@ public class MountainCarTask extends Task {
     @Override
     public State getInitialState() {
         return new MountainCarState(defaultInitPosition + 0.5d * (random.nextDouble() - .5d),
-                defaultInitVelocity + .12d * (random.nextDouble() - .5d));
+                defaultInitVelocity + .05d * (random.nextDouble() - .5d));
     }
 }
