@@ -37,7 +37,7 @@ public class Execution {
                 reward = task.immediateReward(sPrime);
                 samples.add(new Tuple(s, action, reward, sPrime));
             } else {
-                samples.add(new Tuple(sPrime, new PrabAction(action.a, 1), reward, sPrime));
+                samples.add(new Tuple(sPrime, new PrabAction(random.nextInt(task.actions.length), 1), reward, sPrime));
             }
             step = step + 1;
         }
