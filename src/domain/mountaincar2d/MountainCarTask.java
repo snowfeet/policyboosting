@@ -32,7 +32,7 @@ public class MountainCarTask extends Task {
     private double transitionNoise = 0.0d;
     private Random random;
 
-    public MountainCarTask(Random rand) {
+    public MountainCarTask(Random random) {
         this.random = random;
         this.actions = new Action[3];
         for (int a = 0; a < 3; a++) {
@@ -80,9 +80,9 @@ public class MountainCarTask extends Task {
     @Override
     public double immediateReward(State s) {
         if (isComplete(s)) {
-            return 0;
+            return 1;
         } else {
-            return -1;
+            return 0;
         }
     }
 

@@ -14,6 +14,7 @@ import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import utills.IO;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.REPTree;
 import weka.core.Attribute;
@@ -176,7 +177,7 @@ public class BoostedPolicy extends Policy {
             Task task = rollout.task;
             List<Tuple> samples = rollout.samples;
 
-            double P_z = compuate_P_z(rollout);
+            double P_z = 1;//compuate_P_z(rollout);
             double R_z = compuate_R_z(rollout);
 
             for (int step = samples.size() - 1; step >= 0; step--) {
@@ -184,7 +185,8 @@ public class BoostedPolicy extends Policy {
 
                 features.add(task.getSAFeature(sample.s, sample.a));
                 double prab = ((PrabAction) sample.a).probability;
-                labels.add(P_z * R_z * (1 + sample.reward / R_z) * prab * (1 - prab));
+                double label = P_z * R_z * (1 + sample.reward / (R_z + 0.5)) * prab * (1 - prab);
+                labels.add(label);
             }
         }
 
@@ -192,11 +194,15 @@ public class BoostedPolicy extends Policy {
             int na = rollouts.get(0).task.actions.length;
             dataHead = constructDataHead(features.get(0).length, na);
         }
+
         Instances data = new Instances(dataHead, features.size());
         for (int i = 0; i < features.size(); i++) {
             Instance ins = contructInstance(features.get(i), labels.get(i));
             data.add(ins);
         }
+
+        //IO.saveInstances("data.arff", data);
+
         Classifier c = getBaseLearner();
         try {
             c.buildClassifier(data);

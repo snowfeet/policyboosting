@@ -6,6 +6,7 @@ package experiment;
 
 import core.Action;
 import core.Policy;
+import core.PrabAction;
 import core.State;
 import core.Task;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class Execution {
                 reward = task.immediateReward(sPrime);
                 samples.add(new Tuple(s, action, reward, sPrime));
             } else {
-                samples.add(new Tuple(s, action, reward, sPrime));
+                samples.add(new Tuple(sPrime, new PrabAction(action.a, 1), reward, sPrime));
             }
             step = step + 1;
         }
