@@ -1,7 +1,9 @@
 *.class
-
+*.arff
+*.properties
 # Package Files #
 /nbproject/private/
 /build/
 nbproject/private/private.properties
 /dist/
+/data/
