@@ -59,7 +59,7 @@ public class Experiment {
             System.out.println("iter=" + iter);
             System.out.println("collecting samples...");
 
-            Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, 0.05, new Random(random.nextInt()));
+            Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, 0.1, new Random(random.nextInt()));
             List<ParallelExecute> list = new ArrayList<ParallelExecute>();
 
             ExecutorService exec = Executors.newFixedThreadPool(

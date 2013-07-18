@@ -22,6 +22,7 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
     public EpsionGreedyExplorePolicy(Policy policy, double epsion, Random random) {
         this.rp = new RandomPolicy(new Random(random.nextInt()));
         this.policy = policy;
+        this.epsion = epsion;
         this.random = random;
     }
 
@@ -29,6 +30,7 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
     public PrabAction makeDecisionS(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
         if (thisRand.nextDouble() < epsion) {
+          //  System.err.println("11");
             return rp.makeDecisionS(s, t, thisRand);
         } else {
             PrabAction action = policy.makeDecisionS(s, t, thisRand);
