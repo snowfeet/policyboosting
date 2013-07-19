@@ -30,11 +30,11 @@ public class TestRandomPolicy {
         for (int i = 0; i < trials; i++) {
             Rollout rollout = Execution.runTaskWithFixedStep(task, initialState, new RandomPolicy(new Random(random.nextInt())), maxStep, true, new Random(random.nextInt()));
             double t = 0;
-            for (Tuple tuple : rollout.samples) {
+            for (Tuple tuple : rollout.getSamples()) {
                 t += tuple.reward;
             }
             mean += t;
-            System.out.println(rollout.samples.size() + "\t" + t);
+            System.out.println(rollout.getSamples().size() + "\t" + t);
         }
         mean /= trials;
         System.out.println(mean);

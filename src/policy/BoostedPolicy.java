@@ -174,13 +174,12 @@ public class BoostedPolicy extends Policy {
         List<Double> labels = new ArrayList<Double>();
 
         for (Rollout rollout : rollouts) {
-            Task task = rollout.task;
-            List<Tuple> samples = rollout.samples;
+            Task task = rollout.getTask();
+            List<Tuple> samples = rollout.getSamples();
 
             double P_z = 1;
             //double P_z = compuate_P_z(rollout);
-            //double R_z = rollout.getAvaReward();
-            double R_z = rollout.getReward();
+            double R_z = rollout.getRewards();
 
             for (int step = samples.size() - 1; step >= 0; step--) {
                 Tuple sample = samples.get(step);
@@ -193,7 +192,7 @@ public class BoostedPolicy extends Policy {
         }
 
         if (null == dataHead) {
-            int na = rollouts.get(0).task.actions.length;
+            int na = rollouts.get(0).getTask().actions.length;
             dataHead = constructDataHead(features.get(0).length, na);
         }
 
@@ -233,7 +232,7 @@ public class BoostedPolicy extends Policy {
 
     private double compuate_P_z(Rollout rollout) {
         double P_z = 1;
-        for (Tuple tulpe : rollout.samples) {
+        for (Tuple tulpe : rollout.getSamples()) {
             P_z *= ((PrabAction) tulpe.a).probability;
         }
         return P_z;

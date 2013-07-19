@@ -89,7 +89,7 @@ public class Experiment {
                 Rollout rollout = run.getRollout();
                 rollouts.add(rollout);
                 
-                double totalReward = rollout.getReward();
+                double totalReward = rollout.getRewards();
                 averageReward += totalReward;
                 System.out.print(totalReward+" ");                
             }

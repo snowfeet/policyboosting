@@ -29,22 +29,22 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
     @Override
     public PrabAction makeDecisionS(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
+        PrabAction action = null;
         if (thisRand.nextDouble() < epsion) {
-          //  System.err.println("11");
-            return rp.makeDecisionS(s, t, thisRand);
+            action = rp.makeDecisionS(s, t, thisRand);
         } else {
-            PrabAction action = policy.makeDecisionS(s, t, thisRand);
+            action = policy.makeDecisionS(s, t, thisRand);
             if (action == null) {
-                return rp.makeDecisionS(s, t, thisRand);
-            } else {
-                return action;
+                action = rp.makeDecisionS(s, t, thisRand);
             }
         }
+        return action;
     }
 
     @Override
     public Action makeDecisionD(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
+
         if (thisRand.nextDouble() < epsion) {
             return rp.makeDecisionD(s, t, thisRand);
         } else {

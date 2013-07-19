@@ -28,21 +28,21 @@ public class Execution {
         double reward = Double.NEGATIVE_INFINITY;
 
         int step = 0;
-        while (step < maxStep) {
-            if (!task.isComplete(sPrime)) {
-                s = sPrime;
+        double rewards = 0;
+        while (step < maxStep && !task.isComplete(sPrime)) {
+            s = sPrime;
 
-                action = isStochastic ? policy.makeDecisionS(s, task, random) : policy.makeDecisionD(s, task, random);
-                sPrime = task.transition(s, action, random);
-                reward = task.immediateReward(sPrime);
-                samples.add(new Tuple(s, action, reward, sPrime));
-            } else {
-                samples.add(new Tuple(sPrime, new PrabAction(random.nextInt(task.actions.length), 1), reward, sPrime));
-            }
+            action = isStochastic ? policy.makeDecisionS(s, task, random) : policy.makeDecisionD(s, task, random);
+            sPrime = task.transition(s, action, random);
+            reward = task.immediateReward(sPrime);
+            samples.add(new Tuple(s, action, reward, sPrime));
+
+            rewards = rewards + reward;
             step = step + 1;
         }
 
         Rollout rollout = new Rollout(task, samples);
+        rollout.setRewards(rewards + reward * (maxStep - step));
         return rollout;
     }
 }
