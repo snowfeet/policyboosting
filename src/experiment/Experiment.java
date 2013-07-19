@@ -41,10 +41,9 @@ public class Experiment {
             this.random = new Random(seed);
         }
 
-        public void run() {
-            List<Tuple> samples = Execution.runTaskWithFixedStep(task,
+        public void run() {            
+            rollout = Execution.runTaskWithFixedStep(task,
                     initialState, policy, maxStep, isStochastic, random);
-            rollout = new Rollout(task, samples);
         }
 
         public Rollout getRollout() {

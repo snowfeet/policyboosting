@@ -8,6 +8,7 @@ import experiment.Execution;
 import core.State;
 import core.Task;
 import domain.acrobot.AcrobotTask;
+import experiment.Rollout;
 import experiment.Tuple;
 import java.util.List;
 import java.util.Random;
@@ -29,13 +30,13 @@ public class TestRandomPolicy {
         int trials = 2000;
         double mean = 0;
         for (int i = 0; i < trials; i++) {
-            List<Tuple> samples = Execution.runTaskWithFixedStep(task, initialState, new RandomPolicy(new Random(random.nextInt())), maxStep, true, new Random(random.nextInt()));
+            Rollout rollout = Execution.runTaskWithFixedStep(task, initialState, new RandomPolicy(new Random(random.nextInt())), maxStep, true, new Random(random.nextInt()));
             double t = 0;
-            for (Tuple tuple : samples) {
+            for (Tuple tuple : rollout.samples) {
                 t += tuple.reward;
             }
             mean += t;
-            System.out.println(samples.size() + "\t" + t);
+            System.out.println(rollout.samples.size() + "\t" + t);
         }
         mean /= trials;
         System.out.println(mean);

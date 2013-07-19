@@ -19,7 +19,7 @@ import java.util.Random;
  */
 public class Execution {
 
-    public static List<Tuple> runTaskWithFixedStep(Task task, State initalState, Policy policy, int maxStep, boolean isStochastic, Random random) {
+    public static Rollout runTaskWithFixedStep(Task task, State initalState, Policy policy, int maxStep, boolean isStochastic, Random random) {
         List<Tuple> samples = new ArrayList<Tuple>();
 
         State s = null;
@@ -42,6 +42,7 @@ public class Execution {
             step = step + 1;
         }
 
-        return samples;
+        Rollout rollout = new Rollout(task, samples);
+        return rollout;
     }
 }
