@@ -44,17 +44,16 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
     @Override
     public Action makeDecisionD(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
-
-        if (thisRand.nextDouble() < epsion) {
-            return rp.makeDecisionD(s, t, thisRand);
+        Action policyAction = policy.makeDecisionD(s, t, thisRand);
+        
+        PrabAction action = null;
+        if (thisRand.nextDouble() < epsion || policyAction == null) {
+            action = rp.makeDecisionS(s, t, thisRand);
+            action.setProbability(epsion);
         } else {
-            Action action = policy.makeDecisionS(s, t, thisRand);
-            if (action == null) {
-                return rp.makeDecisionD(s, t, thisRand);
-            } else {
-                return action;
-            }
+            action = new PrabAction(policyAction, epsion);            
         }
+        return action;
     }
 
     @Override

@@ -16,4 +16,17 @@ public class PrabAction extends Action {
         super(a);
         this.probability = probability;
     }
+
+    public PrabAction(Action action, double probability) {
+        super(action.a);
+        this.probability = probability;
+    }
+
+    public double getProbability() {
+        return probability;
+    }
+
+    public void setProbability(double probability) {
+        this.probability = probability;
+    }
 }
