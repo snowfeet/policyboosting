@@ -13,23 +13,28 @@ import java.util.List;
  */
 public class Rollout {
 
-    public Task task;
-    public List<Tuple> samples;
+    private Task task;
+    private List<Tuple> samples;
+    private double rewards;
 
     public Rollout(Task task, List<Tuple> samples) {
         this.task = task;
         this.samples = samples;
     }
 
-    public double getAvaReward() {
-        return getReward() / samples.size();
+    public Task getTask() {
+        return task;
     }
 
-    public double getReward() {
-        double rewards = 0;
-        for (Tuple t : samples) {
-            rewards += t.reward;
-        }
+    public List<Tuple> getSamples() {
+        return samples;
+    }
+
+    public double getRewards() {
         return rewards;
+    }
+
+    public void setRewards(double rewards) {
+        this.rewards = rewards;
     }
 }
