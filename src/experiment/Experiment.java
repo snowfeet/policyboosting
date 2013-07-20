@@ -41,7 +41,7 @@ public class Experiment {
             this.random = new Random(seed);
         }
 
-        public void run() {            
+        public void run() {
             rollout = Execution.runTaskWithFixedStep(task,
                     initialState, policy, maxStep, isStochastic, random);
         }
@@ -55,8 +55,8 @@ public class Experiment {
             int iteration, int trialsPerIter, State initialState, int maxStep,
             boolean isPara, Random random) {
         for (int iter = 0; iter < iteration; iter++) {
-           // System.out.println("iter=" + iter);
-          //  System.out.println("collecting samples...");
+            System.out.print("iter=" + iter + ", ");
+            //  System.out.println("collecting samples...");
 
             Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, 0.1, new Random(random.nextInt()));
             List<ParallelExecute> list = new ArrayList<ParallelExecute>();
@@ -88,15 +88,15 @@ public class Experiment {
             for (ParallelExecute run : list) {
                 Rollout rollout = run.getRollout();
                 rollouts.add(rollout);
-                
+
                 double totalReward = rollout.getRewards();
                 averageReward += totalReward;
-            //    System.out.print(totalReward+" ");                
+                //    System.out.print(totalReward+" ");                
             }
             averageReward /= list.size();
-            System.out.print("\nAverage Total Rewards = "+averageReward);   
-           // System.out.println();
-           // System.out.println("collecting samples is done! Updating meta-policy...");
+            System.out.print("\nAverage Total Rewards = " + averageReward);
+            // System.out.println();
+            // System.out.println("collecting samples is done! Updating meta-policy...");
             policy.update(rollouts);
         }
     }
