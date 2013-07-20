@@ -7,6 +7,7 @@ package core;
 import experiment.Rollout;
 import java.util.List;
 import java.util.Random;
+import policy.BoostedPolicy;
 import policy.RandomPolicy;
 
 /**
@@ -28,7 +29,24 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
 
     @Override
     public PrabAction makeDecisionS(State s, Task t, Random outRand) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Random thisRand = outRand == null ? random : outRand;
+        double[] utilities = ((BoostedPolicy) policy).getUtility(s, t);
+        Action policyAction = ((BoostedPolicy) policy).makeDecisionS(s, t, utilities, thisRand);
+
+        PrabAction action = null;
+        if (thisRand.nextDouble() < epsion || policyAction == null) {
+            action = new PrabAction(rp.makeDecisionD(s, t, thisRand), -1);
+            action.setProbability(epsion);
+        } else {
+            action = new PrabAction(policyAction, -1);
+        }
+
+        if (policyAction == null) {
+            action.setProbability(1.0 / t.actions.length);
+        } else {
+            action.setProbability(epsion / t.actions.length + (1 - epsion) * utilities[action.a]);
+        }
+        return action;
     }
 
     @Override

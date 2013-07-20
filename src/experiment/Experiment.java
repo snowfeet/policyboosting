@@ -65,7 +65,7 @@ public class Experiment {
                     Runtime.getRuntime().availableProcessors() - 1);
             for (int i = 0; i < trialsPerIter; i++) {
                 ParallelExecute run = new ParallelExecute(task, explorePolicy,
-                        initialState, maxStep, false, random.nextInt());
+                        initialState, maxStep, true, random.nextInt());
                 list.add(run);
                 if (isPara && iter > 0) {
                     exec.execute(run);

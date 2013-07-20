@@ -93,6 +93,16 @@ public class BoostedPolicy extends Policy {
         int K = t.actions.length;
 
         double[] utilities = getUtility(s, t);
+        return makeDecisionS(s, t, utilities, thisRand);
+    }
+
+    public PrabAction makeDecisionS(State s, Task t, double[] utilities, Random outRand) {
+        if (numIteration == 0 || utilities == null) {
+            return null;
+        }
+
+        Random thisRand = outRand == null ? random : outRand;
+        int K = t.actions.length;
 
         int bestAction = 0, m = 2;
         for (int k = 1; k < K; k++) {
@@ -111,6 +121,7 @@ public class BoostedPolicy extends Policy {
     }
 
     public double[] getUtility(State s, Task t) {
+
         int K = t.actions.length;
         double[] utilities = new double[K];
         double maxUtility = Double.NEGATIVE_INFINITY;
@@ -253,7 +264,7 @@ public class BoostedPolicy extends Policy {
         // by calculating r = exp(\sum log(P_z[i]) - \sum log(D_z[i]))
 
         double sumP = 0, sumD = 0;
-        boolean flag = numIteration == 1;
+        boolean flag = numIteration < 1000;
         if (flag) {
             System.out.println(rollout.getRewards());
         }
