@@ -22,7 +22,7 @@ import utills.IO;
  */
 public class TestBoostedPolicy {
 
-    static int maxStep = 5000;
+    static int maxStep = 2000;
     static boolean isPara = true;
 
     public static void main(String[] args) throws Exception {

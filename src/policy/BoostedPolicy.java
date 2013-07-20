@@ -248,6 +248,12 @@ public class BoostedPolicy extends Policy {
     }
 
     private double[] compuate_P_z_of_R_z(Rollout rollout) {
+        boolean flag = numIteration < 0;
+        if (flag) {
+            System.out.println(rollout.getRewards());
+            int x=1;
+        }
+
         int T = rollout.getSamples().size();
         double[] P_z = new double[T];
         double[] D_z = new double[T];
@@ -264,10 +270,6 @@ public class BoostedPolicy extends Policy {
         // by calculating r = exp(\sum log(P_z[i]) - \sum log(D_z[i]))
 
         double sumP = 0, sumD = 0;
-        boolean flag = numIteration > 1000;
-        if (flag) {
-            System.out.println(rollout.getRewards());
-        }
         for (int i = T - 1; i >= 0; i--) {
             sumP += Math.log(P_z[i]);
             sumD += Math.log(D_z[i]);
@@ -277,10 +279,11 @@ public class BoostedPolicy extends Policy {
                 System.out.println(P_z[i] + "\t" + D_z[i] + "\t" + R_z[i]);
             }
         }
+
         if (flag) {
-          //  System.exit(1);
+            System.out.println(R_z[0]);
+            System.exit(1);
         }
-        //System.out.println(sumP + "\t" + sumD + "\t" + R_z[0]);
         return R_z;
     }
 }
