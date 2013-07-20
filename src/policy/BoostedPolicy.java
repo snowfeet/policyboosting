@@ -264,13 +264,13 @@ public class BoostedPolicy extends Policy {
         // by calculating r = exp(\sum log(P_z[i]) - \sum log(D_z[i]))
 
         double sumP = 0, sumD = 0;
-        boolean flag = numIteration < 1000;
+        boolean flag = numIteration > 1000;
         if (flag) {
             System.out.println(rollout.getRewards());
         }
         for (int i = T - 1; i >= 0; i--) {
-            sumP += P_z[i];
-            sumD += D_z[i];
+            sumP += Math.log(P_z[i]);
+            sumD += Math.log(D_z[i]);
 
             R_z[i] = Math.exp(sumP - sumD);
             if (flag) {
@@ -278,8 +278,9 @@ public class BoostedPolicy extends Policy {
             }
         }
         if (flag) {
-            System.exit(1);
+          //  System.exit(1);
         }
+        //System.out.println(sumP + "\t" + sumD + "\t" + R_z[0]);
         return R_z;
     }
 }
