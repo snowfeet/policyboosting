@@ -94,7 +94,7 @@ public class Experiment {
                 //    System.out.print(totalReward+" ");                
             }
             averageReward /= list.size();
-            System.out.print("Average Total Rewards = " + averageReward);
+            System.out.println("Average Total Rewards = " + averageReward);
             // System.out.println();
             // System.out.println("collecting samples is done! Updating meta-policy...");
             policy.update(rollouts);
