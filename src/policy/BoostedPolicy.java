@@ -177,17 +177,18 @@ public class BoostedPolicy extends Policy {
             Task task = rollout.getTask();
             List<Tuple> samples = rollout.getSamples();
 
-            double P_z = 1;
-            //double P_z = compuate_P_z(rollout);
+            double[] ratio = compuate_P_z_of_R_z(rollout);
             double R_z = rollout.getRewards();
 
-            for (int step = samples.size() - 1; step >= 0; step--) {
+            for (int step = 0; step < samples.size(); step++) {
                 Tuple sample = samples.get(step);
 
-                features.add(task.getSAFeature(sample.s, sample.a));
-                double prab = ((PrabAction) sample.a).probability;
-                double label = P_z * R_z * (1 + sample.reward / (R_z + 0.5)) * prab * (1 - prab);
+                features.add(task.getSAFeature(sample.s, sample.action));
+                double prab = ((PrabAction) sample.action).probability;
+                double label = ratio[step] * R_z * (1 + sample.reward / (R_z + 0.5)) * prab * (1 - prab);
                 labels.add(label);
+
+                R_z -= sample.reward;
             }
         }
 
@@ -202,7 +203,7 @@ public class BoostedPolicy extends Policy {
             data.add(ins);
         }
 
-        IO.saveInstances("data/data"+numIteration+".arff", data);
+        IO.saveInstances("data/data" + numIteration + ".arff", data);
 
         Classifier c = getBaseLearner();
         try {
@@ -230,11 +231,30 @@ public class BoostedPolicy extends Policy {
         this.numIteration = Math.min(potentialFunctions.size(), numIteration);
     }
 
-    private double compuate_P_z(Rollout rollout) {
-        double P_z = 1;
-        for (Tuple tulpe : rollout.getSamples()) {
-            P_z *= ((PrabAction) tulpe.a).probability;
+    private double[] compuate_P_z_of_R_z(Rollout rollout) {
+        int T = rollout.getSamples().size();
+        double[] P_z = new double[T];
+        double[] D_z = new double[T];
+        double[] R_z = new double[T];
+
+        for (int i = 0; i < T; i++) {
+            Tuple tuple = rollout.getSamples().get(i);
+            double[] utilities = getUtility(tuple.s, rollout.getTask());
+            P_z[i] = utilities[tuple.action.a];
+            D_z[i] = ((PrabAction)tuple .action).probability;
         }
-        return P_z;
+        
+        // to dealwith the overflow problem of r = (P_z[1]*P_z[2]*...P_z[T-1]) / (D_z[1]*D_z[2]*...D_z[T-1])
+        // by calculating r = exp(\sum log(P_z[i]) - \sum log(D_z[i]))
+        
+        double sumP = 0, sumD = 0;
+        
+        for(int i=T-1;i>=0;i--){
+            sumP += P_z[i];
+            sumD += D_z[i];
+            
+            R_z[i] = Math.exp(sumP - sumD);
+        }
+        return R_z;
     }
 }

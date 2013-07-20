@@ -14,13 +14,13 @@ import core.State;
 public class Tuple {
 
     public State s;
-    public Action a;
+    public Action action;
     public double reward;
     public State sPrime;
 
     Tuple(State s, Action a, double reward, State sPrime) {
         this.s = s;
-        this.a = a;
+        this.action = a;
         this.reward = reward;
         this.sPrime = sPrime;
     }

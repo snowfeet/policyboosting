@@ -28,30 +28,26 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
 
     @Override
     public PrabAction makeDecisionS(State s, Task t, Random outRand) {
-        Random thisRand = outRand == null ? random : outRand;
-        PrabAction action = null;
-        if (thisRand.nextDouble() < epsion) {
-            action = rp.makeDecisionS(s, t, thisRand);
-        } else {
-            action = policy.makeDecisionS(s, t, thisRand);
-            if (action == null) {
-                action = rp.makeDecisionS(s, t, thisRand);
-            }
-        }
-        return action;
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public Action makeDecisionD(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
         Action policyAction = policy.makeDecisionD(s, t, thisRand);
-        
+
         PrabAction action = null;
         if (thisRand.nextDouble() < epsion || policyAction == null) {
-            action = rp.makeDecisionS(s, t, thisRand);
+            action = new PrabAction(rp.makeDecisionD(s, t, thisRand), -1);
             action.setProbability(epsion);
         } else {
-            action = new PrabAction(policyAction, epsion);            
+            action = new PrabAction(policyAction, -1);
+        }
+
+        if (action.a == policyAction.a) {
+            action.setProbability(epsion / t.actions.length + (1 - epsion));
+        } else {
+            action.setProbability(epsion / t.actions.length);
         }
         return action;
     }
