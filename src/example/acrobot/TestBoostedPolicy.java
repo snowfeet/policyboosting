@@ -31,7 +31,7 @@ public class TestBoostedPolicy {
         Experiment exp = new Experiment();
 
         BoostedPolicy bp = new BoostedPolicy(new Random(random.nextInt()));
-        bp.setStepsize(1);
+        bp.setStepsize(0.5);
 
         exp.conductExperimentTrain(bp, task, 100, 50, initialState, maxStep, isPara, new Random(random.nextInt()));
     }

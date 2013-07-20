@@ -63,14 +63,20 @@ public class BoostedPolicy extends Policy {
             return null;
         }
 
+        Random thisRand = outRand == null ? random : outRand;
         int K = t.actions.length;
 
         double[] utilities = getUtility(s, t);
-
-        int bestAction = 0;
+        int bestAction = 0, m = 2;
         for (int k = 1; k < K; k++) {
-            if (utilities[k] > utilities[bestAction]) {
+            if (utilities[k] > utilities[bestAction] + Double.MIN_VALUE) {
                 bestAction = k;
+                m = 2;
+            } else if (Math.abs(utilities[k] - utilities[bestAction]) <= Double.MIN_VALUE) {
+                if (thisRand.nextDouble() < 1.0 / m) {
+                    bestAction = k;
+                }
+                m++;
             }
         }
 
@@ -129,7 +135,6 @@ public class BoostedPolicy extends Policy {
         }
 
         double norm = 0;
-        double T = numIteration == 0 ? 1 : numIteration;
         for (int k = 0; k < K; k++) {
             utilities[k] = Math.exp((utilities[k] - maxUtility) / 10);
             norm += utilities[k];
@@ -241,19 +246,28 @@ public class BoostedPolicy extends Policy {
             Tuple tuple = rollout.getSamples().get(i);
             double[] utilities = getUtility(tuple.s, rollout.getTask());
             P_z[i] = utilities[tuple.action.a];
-            D_z[i] = ((PrabAction)tuple .action).probability;
+            D_z[i] = ((PrabAction) tuple.action).probability;
         }
-        
+
         // to dealwith the overflow problem of r = (P_z[1]*P_z[2]*...P_z[T-1]) / (D_z[1]*D_z[2]*...D_z[T-1])
         // by calculating r = exp(\sum log(P_z[i]) - \sum log(D_z[i]))
-        
+
         double sumP = 0, sumD = 0;
-        
-        for(int i=T-1;i>=0;i--){
+        boolean flag = numIteration == 1;
+        if (flag) {
+            System.out.println(rollout.getRewards());
+        }
+        for (int i = T - 1; i >= 0; i--) {
             sumP += P_z[i];
             sumD += D_z[i];
-            
+
             R_z[i] = Math.exp(sumP - sumD);
+            if (flag) {
+                System.out.println(P_z[i] + "\t" + D_z[i] + "\t" + R_z[i]);
+            }
+        }
+        if (flag) {
+            System.exit(1);
         }
         return R_z;
     }

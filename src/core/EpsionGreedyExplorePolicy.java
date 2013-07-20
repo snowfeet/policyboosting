@@ -44,7 +44,9 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
             action = new PrabAction(policyAction, -1);
         }
 
-        if (policyAction != null && action.a == policyAction.a) {
+        if (policyAction == null) {
+            action.setProbability(1.0 / t.actions.length);
+        } else if (action.a == policyAction.a) {
             action.setProbability(epsion / t.actions.length + (1 - epsion));
         } else {
             action.setProbability(epsion / t.actions.length);
