@@ -18,6 +18,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import utills.IO;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.REPTree;
 import weka.core.Attribute;
@@ -155,7 +156,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
             double[] stateFeature = s.getfeatures();
             Instance ins = contructInstance(stateFeature, 0);
             ins.setDataset(dataHead);
-            utilities[k] = 0;
+            utilities[k] = 1;
             for (int j = 0; j < numIteration; j++) {
                 try {
                     utilities[k] += alphas[k].get(j) * potentialFunctions[k].get(j).classifyInstance(ins);
@@ -230,7 +231,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
         for (int k = 0; k < A; k++) {
             labels[k] = new ArrayList<Double>();
         }
-        
+
         // extract features
         for (Rollout rollout : rollouts) {
             Task task = rollout.getTask();
@@ -252,8 +253,10 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
                 for (int k = 0; k < A; k++) {
                     if (sample.action.a == k) {
                         labels[k].add(labelConstant * probabilities[step][k] * (1 - probabilities[step][k]));
+                        System.out.println(labelConstant);
                     } else {
                         labels[k].add(-labelConstant * probabilities[step][k] * probabilities[step][k] / utilities[step][k]);
+                        //System.out.println(utilities[step][k]);
                     }
                 }
 
@@ -275,7 +278,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
                 Instance ins = contructInstance(features.get(i), labels[k].get(i));
                 data.add(ins);
             }
-
+            IO.saveInstances("data/data-" + k + "-" + numIteration + ".arff", data);
             ParallelTrain run = new ParallelTrain(getBaseLearner(), data);
             rList.add(run);
             exec.execute(run);
@@ -318,7 +321,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
     }
 
     private double[] compuate_P_z_of_D_z(Rollout rollout, double[][] probabilities) {
-        boolean flag = numIteration < 0;
+        boolean flag = numIteration == 0;
         if (flag) {
             System.out.println(rollout.getRewards());
             int x = 1;
