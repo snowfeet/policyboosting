@@ -219,7 +219,7 @@ public class BoostedPolicy extends Policy {
             data.add(ins);
         }
 
-        IO.saveInstances("data/data" + numIteration + ".arff", data);
+       // IO.saveInstances("data/data" + numIteration + ".arff", data);
 
         Classifier c = getBaseLearner();
         try {

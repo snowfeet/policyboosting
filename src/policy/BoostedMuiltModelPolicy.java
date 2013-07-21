@@ -28,7 +28,6 @@ import weka.core.Instances;
  */
 public class BoostedMuiltModelPolicy extends Policy {
 
-    private RandomPolicy rp;
     private List<Double>[] alphas;
     private List<Classifier>[] potentialFunctions;
     private Classifier base;
@@ -36,7 +35,6 @@ public class BoostedMuiltModelPolicy extends Policy {
     private Instances dataHead = null;
 
     public BoostedMuiltModelPolicy(Random rand) {
-        rp = new RandomPolicy(new Random());
         numIteration = 0;
         random = rand;
         REPTree tree = new REPTree();
@@ -118,11 +116,33 @@ public class BoostedMuiltModelPolicy extends Policy {
         return new PrabAction(bestAction, utilities[bestAction]);
     }
 
-    public double[] getUtility(State s, Task t) {
+    public double[] getProbability(double[] utilities) {
+        double[] probabilities = new double[utilities.length];
+        double maxUtility = Double.NEGATIVE_INFINITY;
+        for (int k = 0; k < utilities.length; k++) {
+            if (utilities[k] > maxUtility) {
+                maxUtility = utilities[k];
+            }
+        }
 
+        double norm = 0;
+        for (int k = 0; k < utilities.length; k++) {
+            probabilities[k] = Math.exp(utilities[k] - maxUtility + 10);
+            norm += probabilities[k];
+        }
+
+
+        for (int k = 0; k < probabilities.length; k++) {
+            probabilities[k] /= norm;
+        }
+
+        return utilities;
+    }
+
+    public double[] getUtility(State s, Task t) {
         int K = t.actions.length;
         double[] utilities = new double[K];
-        double maxUtility = Double.NEGATIVE_INFINITY;
+
         for (int k = 0; k < K; k++) {
             double[] stateActionFeature = t.getSAFeature(s, new Action(k));
             Instance ins = contructInstance(stateActionFeature, 0);
@@ -133,23 +153,11 @@ public class BoostedMuiltModelPolicy extends Policy {
             utilities[k] = 0;
             for (int j = 0; j < numIteration; j++) {
                 try {
-                    utilities[k] += alphas.get(j) * potentialFunctions.get(j).classifyInstance(ins);
+                    utilities[k] += alphas[k].get(j) * potentialFunctions[k].get(j).classifyInstance(ins);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }
-            if (utilities[k] > maxUtility) {
-                maxUtility = utilities[k];
-            }
-        }
-
-        double norm = 0;
-        for (int k = 0; k < K; k++) {
-            utilities[k] = Math.exp((utilities[k] - maxUtility) / 10);
-            norm += utilities[k];
-        }
-        for (int k = 0; k < K; k++) {
-            utilities[k] /= norm;
         }
 
         return utilities;
@@ -228,7 +236,7 @@ public class BoostedMuiltModelPolicy extends Policy {
             data.add(ins);
         }
 
-        IO.saveInstances("data/data" + numIteration + ".arff", data);
+        //IO.saveInstances("data/data" + numIteration + ".arff", data);
 
         Classifier c = getBaseLearner();
         try {
@@ -237,9 +245,6 @@ public class BoostedMuiltModelPolicy extends Policy {
             ex.printStackTrace();
         }
 
-        int t = alphas.size() + 1;
-        alphas.add(stepsize / Math.sqrt(t));
-        potentialFunctions.add(c);
         numIteration++;
     }
 
@@ -253,7 +258,7 @@ public class BoostedMuiltModelPolicy extends Policy {
 
     @Override
     public void setNumIteration(int numIteration) {
-        this.numIteration = Math.min(potentialFunctions.size(), numIteration);
+        this.numIteration = Math.min(potentialFunctions[0].size(), numIteration);
     }
 
     private double[] compuate_P_z_of_R_z(Rollout rollout) {
