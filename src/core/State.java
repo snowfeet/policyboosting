@@ -9,5 +9,15 @@ package core;
  * @author daq
  */
 public abstract class State {
-    public abstract double[] extractFeature();
+
+    private double[] features;
+
+    protected abstract double[] extractFeature();
+
+    public double[] getfeatures() {
+        if (null == features) {
+            extractFeature();
+        }
+        return features;
+    }
 }

@@ -144,11 +144,8 @@ public class BoostedMuiltModelPolicy extends Policy {
         double[] utilities = new double[K];
 
         for (int k = 0; k < K; k++) {
-            double[] stateActionFeature = t.getSAFeature(s, new Action(k));
-            Instance ins = contructInstance(stateActionFeature, 0);
-            if (null == dataHead) {
-                dataHead = constructDataHead(stateActionFeature.length, K);
-            }
+            double[] stateFeature = s.getfeatures();
+            Instance ins = contructInstance(stateFeature, 0);
             ins.setDataset(dataHead);
             utilities[k] = 0;
             for (int j = 0; j < numIteration; j++) {
@@ -163,26 +160,20 @@ public class BoostedMuiltModelPolicy extends Policy {
         return utilities;
     }
 
-    private Instance contructInstance(double[] stateActionTaskFeature, double label) {
-        int D = stateActionTaskFeature.length;
-        double[] values = new double[D + 1];
+    private Instance contructInstance(double[] stateFeature, double label) {
+        int D = stateFeature.length;
+        double[] values = new double[D + 1];        
+        System.arraycopy(stateFeature, 0, values, 0, D);
         values[D] = label;
-        System.arraycopy(stateActionTaskFeature, 0, values, 0, D);
         Instance ins = new Instance(1.0, values);
         return ins;
     }
 
-    public Instances constructDataHead(int D, int na) {
+    public Instances constructDataHead(int D) {
         FastVector attInfo_x = new FastVector();
-        for (int i = 0; i < D - 1; i++) {
+        for (int i = 0; i < D; i++) {
             attInfo_x.addElement(new Attribute("att_" + i, i));
         }
-
-        FastVector att = new FastVector(na);
-        for (int i = 0; i < na; i++) {
-            att.addElement("" + i);
-        }
-        attInfo_x.addElement(new Attribute("action", att, D - 1));
 
         attInfo_x.addElement(new Attribute("class", D));
         Instances data = new Instances("dataHead", attInfo_x, 0);
@@ -226,8 +217,7 @@ public class BoostedMuiltModelPolicy extends Policy {
         }
 
         if (null == dataHead) {
-            int na = rollouts.get(0).getTask().actions.length;
-            dataHead = constructDataHead(features.get(0).length, na);
+            dataHead = constructDataHead(features.get(0).length);
         }
 
         Instances data = new Instances(dataHead, features.size());
