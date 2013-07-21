@@ -37,10 +37,11 @@ public class BoostedMuiltModelPolicy extends Policy {
     public BoostedMuiltModelPolicy(Random rand) {
         numIteration = 0;
         random = rand;
+        stepsize = 1;
+        
         REPTree tree = new REPTree();
         tree.setMaxDepth(100);
-        base = tree;
-        stepsize = 1;
+        base = tree;        
     }
 
     public Classifier getBaseLearner() {
@@ -60,11 +61,11 @@ public class BoostedMuiltModelPolicy extends Policy {
         }
 
         Random thisRand = outRand == null ? random : outRand;
-        int K = t.actions.length;
+        int A = t.actions.length;
 
         double[] utilities = getUtility(s, t);
         int bestAction = 0, m = 2;
-        for (int k = 1; k < K; k++) {
+        for (int k = 1; k < A; k++) {
             if (utilities[k] > utilities[bestAction] + Double.MIN_VALUE) {
                 bestAction = k;
                 m = 2;
@@ -86,26 +87,26 @@ public class BoostedMuiltModelPolicy extends Policy {
         }
 
         Random thisRand = outRand == null ? random : outRand;
-        int K = t.actions.length;
-
+        
         double[] utilities = getUtility(s, t);
-        return makeDecisionS(s, t, utilities, thisRand);
+        double[] probabilities = getProbability(utilities);
+        return makeDecisionS(s, t, probabilities, thisRand);
     }
 
-    public PrabAction makeDecisionS(State s, Task t, double[] utilities, Random outRand) {
-        if (numIteration == 0 || utilities == null) {
+    public PrabAction makeDecisionS(State s, Task t, double[] probabilities, Random outRand) {
+        if (numIteration == 0 || probabilities == null) {
             return null;
         }
 
         Random thisRand = outRand == null ? random : outRand;
-        int K = t.actions.length;
+        int A = t.actions.length;
 
         int bestAction = 0, m = 2;
-        for (int k = 1; k < K; k++) {
-            if (utilities[k] > utilities[bestAction] + Double.MIN_VALUE) {
+        for (int k = 1; k < A; k++) {
+            if (probabilities[k] > probabilities[bestAction] + Double.MIN_VALUE) {
                 bestAction = k;
                 m = 2;
-            } else if (Math.abs(utilities[k] - utilities[bestAction]) <= Double.MIN_VALUE) {
+            } else if (Math.abs(probabilities[k] - probabilities[bestAction]) <= Double.MIN_VALUE) {
                 if (thisRand.nextDouble() < 1.0 / m) {
                     bestAction = k;
                 }
@@ -113,7 +114,7 @@ public class BoostedMuiltModelPolicy extends Policy {
             }
         }
 
-        return new PrabAction(bestAction, utilities[bestAction]);
+        return new PrabAction(bestAction, probabilities[bestAction]);
     }
 
     public double[] getProbability(double[] utilities) {
@@ -140,10 +141,10 @@ public class BoostedMuiltModelPolicy extends Policy {
     }
 
     public double[] getUtility(State s, Task t) {
-        int K = t.actions.length;
-        double[] utilities = new double[K];
+        int A = t.actions.length;
+        double[] utilities = new double[A];
 
-        for (int k = 0; k < K; k++) {
+        for (int k = 0; k < A; k++) {
             double[] stateFeature = s.getfeatures();
             Instance ins = contructInstance(stateFeature, 0);
             ins.setDataset(dataHead);

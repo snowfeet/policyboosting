@@ -10,9 +10,9 @@ package core;
  */
 public abstract class State {
 
-    private double[] features;
+    protected double[] features;
 
-    protected abstract double[] extractFeature();
+    protected abstract void extractFeature();
 
     public double[] getfeatures() {
         if (null == features) {

@@ -24,7 +24,7 @@ public abstract class Task implements Serializable {
     public abstract boolean isComplete(State s);
 
     public double[] getSAFeature(State s, Action action) {
-        double[] feature = s.extractFeature();
+        double[] feature = s.getfeatures();
         double[] saFea = new double[feature.length + 1];
         System.arraycopy(feature, 0, saFea, 0, feature.length);
         saFea[saFea.length - 1] = action.a;

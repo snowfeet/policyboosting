@@ -22,13 +22,12 @@ public class AcrobotState extends State {
     }
 
     @Override
-    public double[] extractFeature() {
-        double[] fea = new double[4];
+    public void extractFeature() {
+        features = new double[4];
         int m = 0;
-        fea[m++] = theta1;
-        fea[m++] = theta2;
-        fea[m++] = theta1Dot;
-        fea[m++] = theta2Dot;
-        return fea;
+        features[m++] = theta1;
+        features[m++] = theta2;
+        features[m++] = theta1Dot;
+        features[m++] = theta2Dot;
     }
 }
