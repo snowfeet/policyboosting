@@ -5,6 +5,7 @@
 package policy;
 
 import core.Action;
+import core.GibbsPolicy;
 import core.Policy;
 import core.PrabAction;
 import core.State;
@@ -14,7 +15,9 @@ import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import utills.IO;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.REPTree;
 import weka.core.Attribute;
@@ -26,7 +29,7 @@ import weka.core.Instances;
  *
  * @author daq
  */
-public class BoostedMuiltModelPolicy extends Policy {
+public class BoostedMuiltModelPolicy extends GibbsPolicy {
 
     private List<Double>[] alphas;
     private List<Classifier>[] potentialFunctions;
@@ -117,6 +120,10 @@ public class BoostedMuiltModelPolicy extends Policy {
         return new PrabAction(bestAction, probabilities[bestAction]);
     }
 
+    public double[] getProbability(State s, Task t) {
+        return getProbability(getUtility(s, t));
+    }
+
     public double[] getProbability(double[] utilities) {
         double[] probabilities = new double[utilities.length];
         double maxUtility = Double.NEGATIVE_INFINITY;
@@ -182,86 +189,135 @@ public class BoostedMuiltModelPolicy extends Policy {
         return data;
     }
 
+    class ParallelTrain implements Runnable {
+
+        private Classifier c;
+        private Instances data;
+
+        public ParallelTrain(Classifier c, Instances data) {
+            this.c = c;
+            this.data = data;
+        }
+
+        public void run() {
+            try {
+                c.buildClassifier(data);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        public Classifier getC() {
+            return c;
+        }
+    }
+
     @Override
     public void update(List<Rollout> rollouts) {
         int A = rollouts.get(0).getTask().actions.length;
 
         if (potentialFunctions == null) {
-            potentialFunctions = new List[A];
-            alphas = new List[A];
+            potentialFunctions = new ArrayList[A];
+            alphas = new ArrayList[A];
             for (int k = 0; k < A; k++) {
                 potentialFunctions[k] = new ArrayList<Classifier>();
                 alphas[k] = new ArrayList<Double>();
             }
         }
 
-
+        List<double[]> features = new ArrayList<double[]>();//same features for all model
+        List<Double>[] labels = new List[A]; // different labels for different model, so an array needed here
         for (int k = 0; k < A; k++) {
-            // update kth model
-            
-            List<double[]> features = new ArrayList<double[]>();
-            List<Double> labels = new ArrayList<Double>();
+            labels[k] = new ArrayList<Double>();
+        }
+        
+        // extract features
+        for (Rollout rollout : rollouts) {
+            Task task = rollout.getTask();
+            List<Tuple> samples = rollout.getSamples();
 
-            for (Rollout rollout : rollouts) {
-                Task task = rollout.getTask();
-                List<Tuple> samples = rollout.getSamples();
+            double[][] utilities = getRolloutUtilities(rollout);
+            double[][] probabilities = getRolloutProbabilities(utilities);
 
-                double[] ratio = compuate_P_z_of_R_z(rollout);
-                double R_z = rollout.getRewards();
+            double[] ratio = compuate_P_z_of_D_z(rollout, probabilities);
+            double R_z = rollout.getRewards();
 
-                for (int step = 0; step < samples.size(); step++) {
-                    Tuple sample = samples.get(step);
+            for (int step = 0; step < samples.size(); step++) {
+                Tuple sample = samples.get(step);
 
-                    features.add(task.getSAFeature(sample.s, sample.action));
-                    double prab = ((PrabAction) sample.action).probability;
-                    double label = ratio[step] * R_z * (1 + sample.reward / (R_z + 0.5)) * prab * (1 - prab);
-                    labels.add(label);
+                features.add(task.getSAFeature(sample.s, sample.action));
 
-                    R_z -= sample.reward;
+                double labelConstant = ratio[step] * R_z * (1 + sample.reward / (R_z + 0.5));
+
+                for (int k = 0; k < A; k++) {
+                    if (sample.action.a == k) {
+                        labels[k].add(labelConstant * probabilities[step][k] * (1 - probabilities[step][k]));
+                    } else {
+                        labels[k].add(-labelConstant * probabilities[step][k] * probabilities[step][k] / utilities[step][k]);
+                    }
                 }
-            }
 
-            if (null == dataHead) {
-                dataHead = constructDataHead(features.get(0).length);
+                R_z -= sample.reward;
             }
+        }
 
+        // parallel train
+        if (null == dataHead) {
+            dataHead = constructDataHead(features.get(0).length);
+        }
+
+        ExecutorService exec = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors() - 1);
+        List<ParallelTrain> rList = new ArrayList<ParallelTrain>();
+        for (int k = 0; k < A; k++) {
             Instances data = new Instances(dataHead, features.size());
             for (int i = 0; i < features.size(); i++) {
-                Instance ins = contructInstance(features.get(i), labels.get(i));
+                Instance ins = contructInstance(features.get(i), labels[k].get(i));
                 data.add(ins);
             }
 
-            //IO.saveInstances("data/data-" + k + "-" + numIteration + ".arff", data);
+            ParallelTrain run = new ParallelTrain(getBaseLearner(), data);
+            rList.add(run);
+            exec.execute(run);
+        }
 
-            Classifier c = getBaseLearner();
-            try {
-                c.buildClassifier(data);
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        exec.shutdown();
+        try {
+            while (!exec.awaitTermination(10, TimeUnit.SECONDS)) {
             }
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
 
+        for (int k = 0; k < A; k++) {
             int t = alphas[k].size() + 1;
             alphas[k].add(stepsize / Math.sqrt(t));
-            potentialFunctions[k].add(c);
+            potentialFunctions[k].add(rList.get(k).getC());
         }
 
         numIteration++;
     }
 
-    public double getStepsize() {
-        return stepsize;
+    private double[][] getRolloutUtilities(Rollout rollout) {
+        Task task = rollout.getTask();
+        List<Tuple> samples = rollout.getSamples();
+
+        double[][] utilities = new double[samples.size()][];
+        for (int i = 0; i < samples.size(); i++) {
+            utilities[i] = getUtility(samples.get(i).s, task);
+        }
+        return utilities;
     }
 
-    public void setStepsize(double stepsize) {
-        this.stepsize = stepsize;
+    private double[][] getRolloutProbabilities(double[][] utilities) {
+        double[][] probabilities = new double[utilities.length][];
+        for (int i = 0; i < utilities.length; i++) {
+            probabilities[i] = getProbability(utilities[i]);
+        }
+        return probabilities;
     }
 
-    @Override
-    public void setNumIteration(int numIteration) {
-        this.numIteration = Math.min(potentialFunctions[0].size(), numIteration);
-    }
-
-    private double[] compuate_P_z_of_R_z(Rollout rollout) {
+    private double[] compuate_P_z_of_D_z(Rollout rollout, double[][] probabilities) {
         boolean flag = numIteration < 0;
         if (flag) {
             System.out.println(rollout.getRewards());
@@ -275,8 +331,7 @@ public class BoostedMuiltModelPolicy extends Policy {
 
         for (int i = 0; i < T; i++) {
             Tuple tuple = rollout.getSamples().get(i);
-            double[] utilities = getUtility(tuple.s, rollout.getTask());
-            P_z[i] = utilities[tuple.action.a];
+            P_z[i] = probabilities[i][tuple.action.a];
             D_z[i] = ((PrabAction) tuple.action).probability;
         }
 
@@ -299,5 +354,18 @@ public class BoostedMuiltModelPolicy extends Policy {
             System.exit(1);
         }
         return R_z;
+    }
+
+    public double getStepsize() {
+        return stepsize;
+    }
+
+    public void setStepsize(double stepsize) {
+        this.stepsize = stepsize;
+    }
+
+    @Override
+    public void setNumIteration(int numIteration) {
+        this.numIteration = Math.min(potentialFunctions[0].size(), numIteration);
     }
 }

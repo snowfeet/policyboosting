@@ -5,6 +5,7 @@
 package policy;
 
 import core.Action;
+import core.GibbsPolicy;
 import core.Policy;
 import core.PrabAction;
 import experiment.Rollout;
@@ -26,7 +27,7 @@ import weka.core.Instances;
  *
  * @author daq
  */
-public class BoostedPolicy extends Policy {
+public class BoostedPolicy extends GibbsPolicy {
 
     private RandomPolicy rp;
     private List<Double> alphas;
@@ -66,7 +67,7 @@ public class BoostedPolicy extends Policy {
         Random thisRand = outRand == null ? random : outRand;
         int K = t.actions.length;
 
-        double[] utilities = getUtility(s, t);
+        double[] utilities = getProbability(s, t);
         int bestAction = 0, m = 2;
         for (int k = 1; k < K; k++) {
             if (utilities[k] > utilities[bestAction] + Double.MIN_VALUE) {
@@ -92,7 +93,7 @@ public class BoostedPolicy extends Policy {
         Random thisRand = outRand == null ? random : outRand;
         int K = t.actions.length;
 
-        double[] utilities = getUtility(s, t);
+        double[] utilities = getProbability(s, t);
         return makeDecisionS(s, t, utilities, thisRand);
     }
 
@@ -120,7 +121,7 @@ public class BoostedPolicy extends Policy {
         return new PrabAction(bestAction, utilities[bestAction]);
     }
 
-    public double[] getUtility(State s, Task t) {
+    public double[] getProbability(State s, Task t) {
 
         int K = t.actions.length;
         double[] utilities = new double[K];
@@ -261,7 +262,7 @@ public class BoostedPolicy extends Policy {
 
         for (int i = 0; i < T; i++) {
             Tuple tuple = rollout.getSamples().get(i);
-            double[] utilities = getUtility(tuple.s, rollout.getTask());
+            double[] utilities = getProbability(tuple.s, rollout.getTask());
             P_z[i] = utilities[tuple.action.a];
             D_z[i] = ((PrabAction) tuple.action).probability;
         }

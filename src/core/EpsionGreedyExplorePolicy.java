@@ -30,8 +30,8 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
     @Override
     public PrabAction makeDecisionS(State s, Task t, Random outRand) {
         Random thisRand = outRand == null ? random : outRand;
-        double[] utilities = ((BoostedPolicy) policy).getUtility(s, t);
-        Action policyAction = ((BoostedPolicy) policy).makeDecisionS(s, t, utilities, thisRand);
+        double[] probabilities = ((GibbsPolicy) policy).getProbability(s, t);
+        Action policyAction = ((GibbsPolicy) policy).makeDecisionS(s, t, probabilities, thisRand);
 
         PrabAction action = null;
         if (thisRand.nextDouble() < epsion || policyAction == null) {
@@ -44,7 +44,7 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
         if (policyAction == null) {
             action.setProbability(1.0 / t.actions.length);
         } else {
-            action.setProbability(epsion / t.actions.length + (1 - epsion) * utilities[action.a]);
+            action.setProbability(epsion / t.actions.length + (1 - epsion) * probabilities[action.a]);
         }
         return action;
     }
