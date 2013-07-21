@@ -38,10 +38,10 @@ public class BoostedMuiltModelPolicy extends Policy {
         numIteration = 0;
         random = rand;
         stepsize = 1;
-        
+
         REPTree tree = new REPTree();
         tree.setMaxDepth(100);
-        base = tree;        
+        base = tree;
     }
 
     public Classifier getBaseLearner() {
@@ -87,7 +87,7 @@ public class BoostedMuiltModelPolicy extends Policy {
         }
 
         Random thisRand = outRand == null ? random : outRand;
-        
+
         double[] utilities = getUtility(s, t);
         double[] probabilities = getProbability(utilities);
         return makeDecisionS(s, t, probabilities, thisRand);
@@ -163,7 +163,7 @@ public class BoostedMuiltModelPolicy extends Policy {
 
     private Instance contructInstance(double[] stateFeature, double label) {
         int D = stateFeature.length;
-        double[] values = new double[D + 1];        
+        double[] values = new double[D + 1];
         System.arraycopy(stateFeature, 0, values, 0, D);
         values[D] = label;
         Instance ins = new Instance(1.0, values);
@@ -189,51 +189,60 @@ public class BoostedMuiltModelPolicy extends Policy {
         if (potentialFunctions == null) {
             potentialFunctions = new List[A];
             alphas = new List[A];
-            for (int i = 0; i < A; i++) {
-                potentialFunctions[i] = new ArrayList<Classifier>();
-                alphas[i] = new ArrayList<Double>();
+            for (int k = 0; k < A; k++) {
+                potentialFunctions[k] = new ArrayList<Classifier>();
+                alphas[k] = new ArrayList<Double>();
             }
         }
 
-        List<double[]> features = new ArrayList<double[]>();
-        List<Double> labels = new ArrayList<Double>();
 
-        for (Rollout rollout : rollouts) {
-            Task task = rollout.getTask();
-            List<Tuple> samples = rollout.getSamples();
+        for (int k = 0; k < A; k++) {
+            // update kth model
+            
+            List<double[]> features = new ArrayList<double[]>();
+            List<Double> labels = new ArrayList<Double>();
 
-            double[] ratio = compuate_P_z_of_R_z(rollout);
-            double R_z = rollout.getRewards();
+            for (Rollout rollout : rollouts) {
+                Task task = rollout.getTask();
+                List<Tuple> samples = rollout.getSamples();
 
-            for (int step = 0; step < samples.size(); step++) {
-                Tuple sample = samples.get(step);
+                double[] ratio = compuate_P_z_of_R_z(rollout);
+                double R_z = rollout.getRewards();
 
-                features.add(task.getSAFeature(sample.s, sample.action));
-                double prab = ((PrabAction) sample.action).probability;
-                double label = ratio[step] * R_z * (1 + sample.reward / (R_z + 0.5)) * prab * (1 - prab);
-                labels.add(label);
+                for (int step = 0; step < samples.size(); step++) {
+                    Tuple sample = samples.get(step);
 
-                R_z -= sample.reward;
+                    features.add(task.getSAFeature(sample.s, sample.action));
+                    double prab = ((PrabAction) sample.action).probability;
+                    double label = ratio[step] * R_z * (1 + sample.reward / (R_z + 0.5)) * prab * (1 - prab);
+                    labels.add(label);
+
+                    R_z -= sample.reward;
+                }
             }
-        }
 
-        if (null == dataHead) {
-            dataHead = constructDataHead(features.get(0).length);
-        }
+            if (null == dataHead) {
+                dataHead = constructDataHead(features.get(0).length);
+            }
 
-        Instances data = new Instances(dataHead, features.size());
-        for (int i = 0; i < features.size(); i++) {
-            Instance ins = contructInstance(features.get(i), labels.get(i));
-            data.add(ins);
-        }
+            Instances data = new Instances(dataHead, features.size());
+            for (int i = 0; i < features.size(); i++) {
+                Instance ins = contructInstance(features.get(i), labels.get(i));
+                data.add(ins);
+            }
 
-        //IO.saveInstances("data/data" + numIteration + ".arff", data);
+            //IO.saveInstances("data/data-" + k + "-" + numIteration + ".arff", data);
 
-        Classifier c = getBaseLearner();
-        try {
-            c.buildClassifier(data);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            Classifier c = getBaseLearner();
+            try {
+                c.buildClassifier(data);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            int t = alphas[k].size() + 1;
+            alphas[k].add(stepsize / Math.sqrt(t));
+            potentialFunctions[k].add(c);
         }
 
         numIteration++;
