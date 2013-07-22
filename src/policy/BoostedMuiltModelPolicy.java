@@ -145,7 +145,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
             probabilities[k] /= norm;
         }
 
-        return utilities;
+        return probabilities;
     }
 
     public double[] getUtility(State s, Task t) {
@@ -246,14 +246,14 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
             for (int step = 0; step < samples.size(); step++) {
                 Tuple sample = samples.get(step);
 
-                features.add(task.getSAFeature(sample.s, sample.action));
+                features.add(sample.s.getfeatures());
 
                 double labelConstant = ratio[step] * R_z * (1 + sample.reward / (R_z + 0.5));
 
                 for (int k = 0; k < A; k++) {
                     if (sample.action.a == k) {
                         labels[k].add(labelConstant * probabilities[step][k] * (1 - probabilities[step][k]));
-                        System.out.println(labelConstant);
+                        //System.out.println(labelConstant);
                     } else {
                         labels[k].add(-labelConstant * probabilities[step][k] * probabilities[step][k] / utilities[step][k]);
                         //System.out.println(utilities[step][k]);
@@ -315,13 +315,15 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
     private double[][] getRolloutProbabilities(double[][] utilities) {
         double[][] probabilities = new double[utilities.length][];
         for (int i = 0; i < utilities.length; i++) {
+           // System.out.println( utilities[i][0]+","+utilities[i][1]+","+utilities[i][2]);
             probabilities[i] = getProbability(utilities[i]);
+           // System.out.println( probabilities[i][0]);
         }
         return probabilities;
     }
 
     private double[] compuate_P_z_of_D_z(Rollout rollout, double[][] probabilities) {
-        boolean flag = numIteration == 0;
+        boolean flag = numIteration < 0;
         if (flag) {
             System.out.println(rollout.getRewards());
             int x = 1;
