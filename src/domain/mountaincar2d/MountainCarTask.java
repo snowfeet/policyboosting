@@ -18,10 +18,10 @@ public class MountainCarTask extends Task {
 
     final public double minPosition = -1.2;
     final public double maxPosition = 0.6;
-    final public double minVelocity = -0.07 * 1;
-    final public double maxVelocity = 0.07 * 1;
+    final public double minVelocity = -0.07;
+    final public double maxVelocity = 0.07;
     final public double goalPosition = 0.5;
-    final public double accelerationFactor = 0.001 * 1;
+    final public double accelerationFactor = 0.001;
     final public double gravityFactor = -0.0025;
     final public double hillPeakFrequency = 3.0;
     //This is the middle of the valley (no slope)
@@ -98,7 +98,7 @@ public class MountainCarTask extends Task {
 
     @Override
     public State getInitialState() {
-        return new MountainCarState(defaultInitPosition + 0.5d * (random.nextDouble() - .5d),
-                defaultInitVelocity + .05d * (random.nextDouble() - .5d));
+        return new MountainCarState(defaultInitPosition + 0.5d * (random.nextDouble() - 0.5d),
+                defaultInitVelocity + 0.05d * (random.nextDouble() - 0.5d));
     }
 }

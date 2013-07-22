@@ -254,12 +254,12 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
                     if (sample.action.a == k) {
                         labels[k].add(labelConstant * probabilities[step][sample.action.a] * (1 - probabilities[step][sample.action.a]));
                         if (k > 0) {
-                            System.out.println(labels[k].get(labels[k].size() - 1));
+                            //  System.out.println(labels[k].get(labels[k].size() - 1));
                         }
                     } else {
                         labels[k].add(-labelConstant * probabilities[step][sample.action.a] * probabilities[step][sample.action.a] / utilities[step][k]);
                         if (k > 0) {
-                            System.out.println(labels[k].get(labels[k].size() - 1));
+                            // System.out.println(labels[k].get(labels[k].size() - 1));
                         }
                     }
                 }
@@ -282,7 +282,9 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
                 Instance ins = contructInstance(features.get(i), labels[k].get(i));
                 data.add(ins);
             }
-            IO.saveInstances("data/data-" + numIteration + "-" + k + ".arff", data);
+            if (k == 0) {
+                IO.saveInstances("data/data-" + numIteration + "-" + k + ".arff", data);
+            }
             ParallelTrain run = new ParallelTrain(getBaseLearner(), data);
             rList.add(run);
             exec.execute(run);

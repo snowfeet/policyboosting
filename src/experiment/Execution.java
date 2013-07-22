@@ -42,7 +42,7 @@ public class Execution {
         }
 
         Rollout rollout = new Rollout(task, samples);
-        rollout.setRewards(rewards + reward * (maxStep - step));
+        rollout.setRewards((rewards + reward * (maxStep - step)));
         return rollout;
     }
 }

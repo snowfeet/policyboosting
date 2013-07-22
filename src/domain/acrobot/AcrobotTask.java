@@ -134,13 +134,4 @@ public class AcrobotTask extends Task {
                 random.nextDouble() - .5d,
                 random.nextDouble() - .5d);
     }
-
-    public State getRandomState() {
-        double[] fea = new double[4];
-        fea[0] = -Math.PI + random.nextDouble() * 2 * Math.PI;
-        fea[1] = -Math.PI + random.nextDouble() * 2 * Math.PI;
-        fea[2] = -4 * Math.PI + random.nextDouble() * 8 * Math.PI;
-        fea[3] = -9 * Math.PI + random.nextDouble() * 18 * Math.PI;
-        return new AcrobotState(fea[0], fea[1], fea[2], fea[3]);
-    }
 }

@@ -22,9 +22,8 @@ public final class MountainCarState extends State {
 
     @Override
     public void extractFeature() {
-        features = new double[3];
-        features[0] = 1;
-        features[1] = position;
-        features[2] = velocity;
+        features = new double[2];
+        features[0] = position;
+        features[1] = velocity;
     }
 }

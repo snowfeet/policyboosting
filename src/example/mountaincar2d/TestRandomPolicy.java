@@ -18,23 +18,20 @@ import policy.RandomPolicy;
  * @author daq
  */
 public class TestRandomPolicy {
-    static int maxStep = 5000;
-    
+
+    static int maxStep = 4000;
+
     public static void main(String[] args) throws Exception {
         Random random = new Random();
         Task task = new MountainCarTask(new Random(random.nextInt()));
         State initialState = task.getInitialState();
 
-        int trials = 2000;
+        int trials = 50;
         double mean = 0;
         for (int i = 0; i < trials; i++) {
             Rollout rollout = Execution.runTaskWithFixedStep(task, initialState, new RandomPolicy(new Random(random.nextInt())), maxStep, true, new Random(random.nextInt()));
-            double t = 0;
-            for (Tuple tuple : rollout.getSamples()) {
-                t += tuple.reward;
-            }
-            mean += t;
-            System.out.println(rollout.getSamples().size() + "\t" + t);
+            mean += rollout.getSamples().size();
+            // System.out.println(rollout.getSamples().size());
         }
         mean /= trials;
         System.out.println(mean);
