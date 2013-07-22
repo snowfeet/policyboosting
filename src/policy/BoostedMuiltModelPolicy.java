@@ -252,11 +252,15 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
 
                 for (int k = 0; k < A; k++) {
                     if (sample.action.a == k) {
-                        labels[k].add(labelConstant * probabilities[step][k] * (1 - probabilities[step][k]));
-                        //System.out.println(labelConstant);
+                        labels[k].add(labelConstant * probabilities[step][sample.action.a] * (1 - probabilities[step][sample.action.a]));
+                        if (k > 0) {
+                            System.out.println(labels[k].get(labels[k].size() - 1));
+                        }
                     } else {
-                        labels[k].add(-labelConstant * probabilities[step][k] * probabilities[step][k] / utilities[step][k]);
-                        //System.out.println(utilities[step][k]);
+                        labels[k].add(-labelConstant * probabilities[step][sample.action.a] * probabilities[step][sample.action.a] / utilities[step][k]);
+                        if (k > 0) {
+                            System.out.println(labels[k].get(labels[k].size() - 1));
+                        }
                     }
                 }
 
@@ -278,7 +282,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
                 Instance ins = contructInstance(features.get(i), labels[k].get(i));
                 data.add(ins);
             }
-            IO.saveInstances("data/data-" + k + "-" + numIteration + ".arff", data);
+            IO.saveInstances("data/data-" + numIteration + "-" + k + ".arff", data);
             ParallelTrain run = new ParallelTrain(getBaseLearner(), data);
             rList.add(run);
             exec.execute(run);
@@ -315,9 +319,9 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
     private double[][] getRolloutProbabilities(double[][] utilities) {
         double[][] probabilities = new double[utilities.length][];
         for (int i = 0; i < utilities.length; i++) {
-           // System.out.println( utilities[i][0]+","+utilities[i][1]+","+utilities[i][2]);
+            // System.out.println( utilities[i][0]+","+utilities[i][1]+","+utilities[i][2]);
             probabilities[i] = getProbability(utilities[i]);
-           // System.out.println( probabilities[i][0]);
+            // System.out.println( probabilities[i][0]);
         }
         return probabilities;
     }
