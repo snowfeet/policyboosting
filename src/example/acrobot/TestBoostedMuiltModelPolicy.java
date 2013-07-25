@@ -17,7 +17,7 @@ import policy.BoostedMuiltModelPolicy;
  */
 public class TestBoostedMuiltModelPolicy {
 
-    static int maxStep = 2000;
+    static int maxStep = 1000;
     static boolean isPara = true;
 
     public static void main(String[] args) throws Exception {
