@@ -234,7 +234,6 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
 
         // extract features
         for (Rollout rollout : rollouts) {
-            Task task = rollout.getTask();
             List<Tuple> samples = rollout.getSamples();
 
             double[][] utilities = getRolloutUtilities(rollout);
@@ -257,7 +256,9 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
                             //  System.out.println(labels[k].get(labels[k].size() - 1));
                         }
                     } else {
-                        labels[k].add(-labelConstant * probabilities[step][sample.action.a] * probabilities[step][sample.action.a] / utilities[step][k]);
+                        labels[k].add(-labelConstant
+                                * probabilities[step][sample.action.a] * probabilities[step][sample.action.a]
+                                * utilities[step][k] / utilities[step][sample.action.a]);
                         if (k > 0) {
                             // System.out.println(labels[k].get(labels[k].size() - 1));
                         }
