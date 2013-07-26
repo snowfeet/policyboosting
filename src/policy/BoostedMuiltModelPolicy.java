@@ -251,7 +251,8 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
 
                 for (int k = 0; k < A; k++) {
                     if (sample.action.a == k) {
-                        labels[k].add(labelConstant * probabilities[step][sample.action.a] * (1 - probabilities[step][sample.action.a]));
+                        labels[k].add(labelConstant
+                                * probabilities[step][sample.action.a] * (1 - probabilities[step][sample.action.a]));
                         if (k > 0) {
                             //  System.out.println(labels[k].get(labels[k].size() - 1));
                         }
