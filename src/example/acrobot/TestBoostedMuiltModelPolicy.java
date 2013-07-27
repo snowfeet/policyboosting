@@ -28,7 +28,7 @@ public class TestBoostedMuiltModelPolicy {
         Experiment exp = new Experiment();
 
         BoostedMuiltModelPolicy bmmp = new BoostedMuiltModelPolicy(new Random(random.nextInt()));
-        bmmp.setStepsize(0.5);
+        bmmp.setStepsize(0.1);
 
         exp.conductExperimentTrain(bmmp, task, 100, 50, initialState, maxStep, isPara, new Random(random.nextInt()));
     }
