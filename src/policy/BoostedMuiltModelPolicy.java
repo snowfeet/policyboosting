@@ -6,7 +6,6 @@ package policy;
 
 import core.Action;
 import core.GibbsPolicy;
-import core.Policy;
 import core.PrabAction;
 import core.State;
 import core.Task;
@@ -46,7 +45,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
         numIteration = 0;
         random = rand;
         stepsize = 1;
-        poolSize = 5000;
+        poolSize = 10000;
         
         REPTree tree = new REPTree();
         tree.setMaxDepth(100);
