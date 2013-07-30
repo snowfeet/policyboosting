@@ -5,6 +5,7 @@
 package experiment;
 
 import core.EpsionGreedyExplorePolicy;
+import core.GibbsPolicy;
 import core.Policy;
 import core.State;
 import core.Task;
@@ -99,5 +100,23 @@ public class Experiment {
             // System.out.println("collecting samples is done! Updating meta-policy...");
             policy.update(rollouts);
         }
+    }
+    
+    public static double calcRolloutObjective(Rollout rollout, GibbsPolicy policy){       
+        double R_pi_z = 0;
+        for(Tuple sample : rollout.getSamples()){
+            double[] probability = policy.getProbability(sample.s, rollout.getTask());
+            R_pi_z += sample.reward * probability[sample.action.a];
+        }
+        
+        return R_pi_z;
+    }
+    
+    public static  double calcObjective(List<Rollout> rollouts, GibbsPolicy policy){
+        double objective = 0;
+        
+        for(Rollout rollout : rollouts)
+            objective += calcRolloutObjective(rollout, policy);
+        return objective;
     }
 }
