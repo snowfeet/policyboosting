@@ -121,11 +121,10 @@ public class BoostedPolicy extends GibbsPolicy {
         return new PrabAction(bestAction, utilities[bestAction]);
     }
 
-    public double[] getProbability(State s, Task t) {
-
+    @Override
+    public double[] getUtility(State s, Task t) {
         int K = t.actions.length;
         double[] utilities = new double[K];
-        double maxUtility = Double.NEGATIVE_INFINITY;
         for (int k = 0; k < K; k++) {
             double[] stateActionFeature = t.getSAFeature(s, new Action(k));
             Instance ins = contructInstance(stateActionFeature, 0);
@@ -141,18 +140,6 @@ public class BoostedPolicy extends GibbsPolicy {
                     ex.printStackTrace();
                 }
             }
-            if (utilities[k] > maxUtility) {
-                maxUtility = utilities[k];
-            }
-        }
-
-        double norm = 0;
-        for (int k = 0; k < K; k++) {
-            utilities[k] = Math.exp((utilities[k] - maxUtility) / 10);
-            norm += utilities[k];
-        }
-        for (int k = 0; k < K; k++) {
-            utilities[k] /= norm;
         }
 
         return utilities;
@@ -220,7 +207,7 @@ public class BoostedPolicy extends GibbsPolicy {
             data.add(ins);
         }
 
-       // IO.saveInstances("data/data" + numIteration + ".arff", data);
+        // IO.saveInstances("data/data" + numIteration + ".arff", data);
 
         Classifier c = getBaseLearner();
         try {
@@ -252,7 +239,7 @@ public class BoostedPolicy extends GibbsPolicy {
         boolean flag = numIteration < 0;
         if (flag) {
             System.out.println(rollout.getRewards());
-            int x=1;
+            int x = 1;
         }
 
         int T = rollout.getSamples().size();

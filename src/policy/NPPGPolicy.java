@@ -69,11 +69,6 @@ public class NPPGPolicy extends GibbsPolicy {
     }
 
     @Override
-    public double[] getProbability(State s, Task t) {
-        
-    }
-
-    @Override
     public PrabAction makeDecisionS(State s, Task t, double[] probabilities, Random outRand) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -96,7 +91,7 @@ public class NPPGPolicy extends GibbsPolicy {
         }
 
         public void run() {
-           rollout = Execution.runTaskWithFixedStep(task,
+            rollout = Execution.runTaskWithFixedStep(task,
                     initialState, policy, maxStep, true, random);//task, initialState, policy, maxStep, true, random);
         }
 
@@ -144,11 +139,13 @@ public class NPPGPolicy extends GibbsPolicy {
             }
             System.out.println("\n -> " + avaStep / trialsPerIter);
 
-            System.out.println("objective value of iter " + iter + "before updating is" + Experiment.calcObjective(rollouts, this));
-            
+            System.out.println("objective value of iter " + iter + " before updating is " + Experiment.calcObjective(rollouts, this));
+
             long check3 = System.currentTimeMillis();
             update(rollouts);
             long check4 = System.currentTimeMillis();
+
+            System.out.println("objective value of iter " + iter + " after  updating is " + Experiment.calcObjective(rollouts, this));
 
             time[iter] = check2 - check1 + check4 - check3;
         }
@@ -224,13 +221,13 @@ public class NPPGPolicy extends GibbsPolicy {
         if (numIteration == 0) {
             return rp.makeDecisionS(s, t, thisRand);
         } else {
-            double[] utilities = getUtility(s, t);
+            double[] probabilities = getProbability(s, t);
 
             int bestAction = 0, num_ties = 1;
             for (int a = 1; a < A; a++) {
-                double value = utilities[a];
-                if (value >= utilities[bestAction]) {
-                    if (value > utilities[bestAction] + Double.MIN_VALUE) {
+                double value = probabilities[a];
+                if (value >= probabilities[bestAction]) {
+                    if (value > probabilities[bestAction] + Double.MIN_VALUE) {
                         bestAction = a;
                     } else {
                         num_ties++;
@@ -241,7 +238,7 @@ public class NPPGPolicy extends GibbsPolicy {
                 }
             }
 
-            return new PrabAction(bestAction, utilities[bestAction]);
+            return new PrabAction(bestAction, probabilities[bestAction]);
         }
     }
 
@@ -251,14 +248,13 @@ public class NPPGPolicy extends GibbsPolicy {
         if (numIteration == 0 || thisRand.nextDouble() < epsionGreedy) {
             return rp.makeDecisionS(s, t, thisRand);
         } else {
-            return (PrabAction)(makeDecisionD(s, t, outRand));
+            return (PrabAction) (makeDecisionD(s, t, outRand));
         }
     }
 
     public double[] getUtility(State s, Task t) {
         int A = t.actions.length;
         double[] utilities = new double[A];
-        double maxUtility = Double.NEGATIVE_INFINITY;
         for (int a = 0; a < A; a++) {
             double[] stateActionFeature = t.getSAFeature(s, new Action(a));
             Instance ins = contructInstance(stateActionFeature, 0, 1.0);
@@ -275,32 +271,8 @@ public class NPPGPolicy extends GibbsPolicy {
                     ex.printStackTrace();
                 }
             }
-            if (utilities[a] > maxUtility) {
-                maxUtility = utilities[a];
-            }
         }
 
-        double norm = 0;
-        boolean f = Math.random() < 0.000 ? true : false;
-        for (int a = 0; a < A; a++) {
-            if (f) {
-                System.out.print(utilities[a] + " ");
-            }
-            utilities[a] = Math.exp(utilities[a]);
-            norm += utilities[a];
-        }
-        if (f) {
-            System.out.print("\n");
-        }
-        for (int a = 0; a < A; a++) {
-            utilities[a] /= norm;
-            if (f) {
-                System.out.print(utilities[a] + " ");
-            }
-        }
-        if (f) {
-            System.out.print("\n");
-        }
         return utilities;
     }
 
