@@ -55,11 +55,12 @@ public class Experiment {
     public void conductExperimentTrain(Policy policy, Task task,
             int iteration, int trialsPerIter, State initialState, int maxStep,
             boolean isPara, Random random) {
+        List<Rollout> rolloutsFirst = null;
         for (int iter = 0; iter < iteration; iter++) {
             System.out.print("iter=" + iter + ", ");
             //  System.out.println("collecting samples...");
 
-            Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, 0.1, new Random(random.nextInt()));
+            Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, 0.0, new Random(random.nextInt()));
             List<ParallelExecute> list = new ArrayList<ParallelExecute>();
 
             ExecutorService exec = Executors.newFixedThreadPool(
@@ -98,17 +99,24 @@ public class Experiment {
             System.out.println("Average Total Rewards = " + averageReward);
             // System.out.println();
             // System.out.println("collecting samples is done! Updating meta-policy...");
+
+//            if (iter == 0) {
+//                rolloutsFirst = rollouts;
+//            } else {
+//                rollouts = rolloutsFirst;
+//            }
+
             policy.update(rollouts);
         }
     }
-    
-    public static double[] calcRolloutObjective(Rollout rollout, GibbsPolicy policy){
+
+    public static double[] calcRolloutObjective(Rollout rollout, GibbsPolicy policy) {
         double[] obj = new double[3];
-        
+
         double log_P_pi_z = 0;
-        
+
         double R_pi_z = 0;
-        for(Tuple sample : rollout.getSamples()){
+        for (Tuple sample : rollout.getSamples()) {
             double[] probability = policy.getProbability(sample.s, rollout.getTask());
             R_pi_z += sample.reward * probability[sample.action.a];
             log_P_pi_z += Math.log(probability[sample.action.a]);
@@ -116,20 +124,22 @@ public class Experiment {
         obj[0] = Math.exp(log_P_pi_z);
         obj[1] = R_pi_z;
         obj[2] = obj[0] * R_pi_z;
-        
+
         return obj;
     }
-    
-    public static  double[] calcObjective(List<Rollout> rollouts, GibbsPolicy policy){
+
+    public static double[] calcObjective(List<Rollout> rollouts, GibbsPolicy policy) {
         double[] objective = new double[3];
-        
-        for(Rollout rollout : rollouts)
-        {
+
+        for (Rollout rollout : rollouts) {
             double[] obj = calcRolloutObjective(rollout, policy);
-            for(int i=0; i<obj.length;i++)
+            for (int i = 0; i < obj.length; i++) {
+                System.err.print(obj[i] + ",");
                 objective[i] += obj[i];
+            }
+            System.err.println();
         }
-        
+
         return objective;
     }
 }

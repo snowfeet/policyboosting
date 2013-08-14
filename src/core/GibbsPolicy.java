@@ -41,6 +41,12 @@ public abstract class GibbsPolicy extends Policy {
             probabilities[k] /= norm;
         }
 
+//        if (numIteration == 1) {
+//            for (int i = 0; i < probabilities.length; i++) {
+//                System.err.print(probabilities[i] + ",");
+//            }
+//            System.err.println();
+//        }
         return probabilities;
     }
 }
