@@ -139,14 +139,16 @@ public class NPPGPolicy extends GibbsPolicy {
             }
             System.out.println("\n -> " + avaStep / trialsPerIter);
 
-            System.out.println("objective value of iter " + iter + " before updating is " + Experiment.calcObjective(rollouts, this));
+            double[] obj = Experiment.calcObjective(rollouts, this);
+            System.out.println("objective value of iter " + iter + " before updating is " + obj[0] + "," + obj[1] + "," + obj[2]);
 
             long check3 = System.currentTimeMillis();
             update(rollouts);
             long check4 = System.currentTimeMillis();
 
-            System.out.println("objective value of iter " + iter + " after  updating is " + Experiment.calcObjective(rollouts, this));
-
+            obj = Experiment.calcObjective(rollouts, this);
+            System.out.println("objective value of iter " + iter + " after updating is " + obj[0] + "," + obj[1] + "," + obj[2]);
+            
             time[iter] = check2 - check1 + check4 - check3;
         }
         return time;

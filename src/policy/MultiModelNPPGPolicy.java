@@ -5,11 +5,13 @@
 package policy;
 
 import core.Action;
+import core.GibbsPolicy;
 import core.Policy;
 import core.PrabAction;
 import core.State;
 import core.Task;
 import experiment.Execution;
+import experiment.Experiment;
 import experiment.Rollout;
 import experiment.Tuple;
 import java.util.ArrayList;
@@ -32,7 +34,7 @@ import weka.core.Instances;
  *
  * @author daq
  */
-public class MultiModelNPPGPolicy extends Policy {
+public class MultiModelNPPGPolicy extends GibbsPolicy {
 
     private static final long serialVersionUID = 2259079722984917190l;
     private RandomPolicy rp;
@@ -132,10 +134,16 @@ public class MultiModelNPPGPolicy extends Policy {
             }
             System.out.println("\n -> " + avaStep / trialsPerIter);
 
+            double[] obj = Experiment.calcObjective(rollouts, this);
+            System.out.println("objective value of iter " + iter + " before updating is " + obj[0] + "," + obj[1] + "," + obj[2]);
+
             long check3 = System.currentTimeMillis();
             update(rollouts);
             long check4 = System.currentTimeMillis();
 
+            obj = Experiment.calcObjective(rollouts, this);
+            System.out.println("objective value of iter " + iter + " after updating is " + obj[0] + "," + obj[1] + "," + obj[2]);
+            
             time[iter] = check2 - check1 + check4 - check3;
         }
         return time;
@@ -319,6 +327,11 @@ public class MultiModelNPPGPolicy extends Policy {
         }
     }
 
+    @Override
+    public PrabAction makeDecisionS(State s, Task t, double[] probabilities, Random outRand) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+        
     private double[][] getRolloutUtilities(Rollout rollout) {
         Task task = rollout.getTask();
         List<Tuple> samples = rollout.getSamples();
@@ -340,6 +353,7 @@ public class MultiModelNPPGPolicy extends Policy {
         return probabilities;
     }
 
+    @Override
     public double[] getProbability(double[] utilities) {
         double[] probabilities = new double[utilities.length];
         double maxUtility = Double.NEGATIVE_INFINITY;

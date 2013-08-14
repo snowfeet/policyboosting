@@ -102,21 +102,34 @@ public class Experiment {
         }
     }
     
-    public static double calcRolloutObjective(Rollout rollout, GibbsPolicy policy){       
+    public static double[] calcRolloutObjective(Rollout rollout, GibbsPolicy policy){
+        double[] obj = new double[3];
+        
+        double log_P_pi_z = 0;
+        
         double R_pi_z = 0;
         for(Tuple sample : rollout.getSamples()){
             double[] probability = policy.getProbability(sample.s, rollout.getTask());
             R_pi_z += sample.reward * probability[sample.action.a];
+            log_P_pi_z += Math.log(probability[sample.action.a]);
         }
+        obj[0] = Math.exp(log_P_pi_z);
+        obj[1] = R_pi_z;
+        obj[2] = obj[0] * R_pi_z;
         
-        return R_pi_z;
+        return obj;
     }
     
-    public static  double calcObjective(List<Rollout> rollouts, GibbsPolicy policy){
-        double objective = 0;
+    public static  double[] calcObjective(List<Rollout> rollouts, GibbsPolicy policy){
+        double[] objective = new double[3];
         
         for(Rollout rollout : rollouts)
-            objective += calcRolloutObjective(rollout, policy);
+        {
+            double[] obj = calcRolloutObjective(rollout, policy);
+            for(int i=0; i<obj.length;i++)
+                objective[i] += obj[i];
+        }
+        
         return objective;
     }
 }

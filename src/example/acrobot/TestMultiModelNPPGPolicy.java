@@ -27,7 +27,7 @@ public class TestMultiModelNPPGPolicy {
 
         MultiModelNPPGPolicy gbPolicy = new MultiModelNPPGPolicy(new Random(random.nextInt()));
         gbPolicy.setStationaryRate(0.3);
-        gbPolicy.setStepsize(0.08);
+        gbPolicy.setStepsize(0.1);
         gbPolicy.setEpsionGreedy(0.1);
         gbPolicy.setEpsionGreedyDecay(1);
         gbPolicy.train(task, 100, 20, null, maxIter, true, random);

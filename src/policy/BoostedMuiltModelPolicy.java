@@ -101,6 +101,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
         return makeDecisionS(s, t, probabilities, thisRand);
     }
     
+    @Override
     public PrabAction makeDecisionS(State s, Task t, double[] probabilities, Random outRand) {
         if (numIteration == 0 || probabilities == null) {
             return null;
