@@ -16,10 +16,12 @@ public class Rollout {
     private Task task;
     private List<Tuple> samples;
     private double rewards;
+    private boolean isSuccess;
 
-    public Rollout(Task task, List<Tuple> samples) {
+    public Rollout(Task task, List<Tuple> samples, boolean isSuccess) {
         this.task = task;
         this.samples = samples;
+        this.isSuccess = isSuccess;
     }
 
     public Task getTask() {
@@ -36,5 +38,13 @@ public class Rollout {
 
     public void setRewards(double rewards) {
         this.rewards = rewards;
+    }
+
+    public boolean isIsSuccess() {
+        return isSuccess;
+    }
+
+    public void setIsSuccess(boolean isSuccess) {
+        this.isSuccess = isSuccess;
     }
 }

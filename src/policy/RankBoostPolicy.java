@@ -203,18 +203,31 @@ public class RankBoostPolicy extends GibbsPolicy {
 
             double R_z = rollout.getRewards();
 
+            double mean_r_z = R_z / rollout.getSamples().size();
+            double accumulated_rewards_sofar = 0;
             for (int step = 0; step < samples.size(); step++) {
                 Tuple sample = samples.get(step);
 
                 features.add(task.getSAFeature(sample.s, sample.action));
                 double prab = ((PrabAction) sample.action).probability;
-                double label = (ratios[i][step] * (numZ * R_z - RZ) / prab + (ratios[i][step] * numZ - tildeP) * sample.reward) * prab * (1 - prab);
+                double tilde_R_z = R_z - accumulated_rewards_sofar, tilde_RZ = RZ;
+
+                // 补偿rewards带来的修改
+                if (rollout.isIsSuccess()) {
+                    tilde_R_z += step * samples.get(samples.size() - 1).reward;                    
+                } else {
+                    tilde_R_z += step * mean_r_z;
+                }
+                //tilde_RZ += (tilde_R_z - R_z);
+
+                double label = (ratios[i][step] * (numZ * tilde_R_z - tilde_RZ) / prab + (ratios[i][step] * numZ - tildeP) * sample.reward) * prab * (1 - prab);
                 labels.add(label);
 
-                R_z -= sample.reward;
-                
-                if(Math.abs(label) > max_abs_label)
+                if (Math.abs(label) > max_abs_label) {
                     max_abs_label = Math.abs(label);
+                }
+
+                accumulated_rewards_sofar += sample.reward;
             }
         }
 
@@ -244,7 +257,7 @@ public class RankBoostPolicy extends GibbsPolicy {
             objective += ratios[i][0] * rollout.getRewards();
         }
         System.err.println(objective);
-        System.err.println(potentialFunctions.size());
+        //System.err.println(potentialFunctions.size());
 
         int t = alphas.size() + 1;
         alphas.add(stepsize / Math.sqrt(t));

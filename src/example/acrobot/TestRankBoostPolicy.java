@@ -23,15 +23,16 @@ public class TestRankBoostPolicy {
     static boolean isPara = false;
 
     public static void main(String[] args) throws Exception {
-        Random random = new Random(1);
+        Random random = new Random();
         Task task = new AcrobotTask(new Random(random.nextInt()));
         State initialState = task.getInitialState();
 
         Experiment exp = new Experiment();
 
         RankBoostPolicy bp = new RankBoostPolicy(new Random(random.nextInt()));
-        bp.setStepsize(0.001);
-
+        bp.setStepsize(0.0001);
+//        bp.setStepsize(0.005);
+        
         exp.conductExperimentTrain(bp, task, 100, 50, initialState, maxStep, isPara, new Random(random.nextInt()));
     }
 }
