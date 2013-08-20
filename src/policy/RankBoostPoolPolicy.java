@@ -33,6 +33,9 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
     private Classifier base;
     private double stepsize;
     private Instances dataHead = null;
+    private List<Instance> dataPool = null;
+    private int poolSize;
+    private int dataCounts;
 
     public RankBoostPoolPolicy(Random rand) {
         numIteration = 0;
@@ -43,6 +46,10 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         tree.setMaxDepth(100);
         base = tree;
         stepsize = 1;
+
+        dataPool = new ArrayList<Instance>();
+        poolSize = 50000;
+        dataCounts = 0;
     }
 
     public Classifier getBaseLearner() {
@@ -250,13 +257,30 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         for (int i = 0; i < features.size(); i++) {
             Instance ins = contructInstance(features.get(i), labels.get(i) / Math.max(1, max_abs_label));
             data.add(ins);
+
+            if (dataPool.size() < poolSize) {
+                dataPool.add(ins);
+            } else {
+                int j = random.nextInt(dataCounts);
+                if (j < poolSize) {
+                    dataPool.remove(j);
+                    dataPool.add(ins);
+                }
+            }
+            dataCounts++;
         }
 
-        IO.saveInstances("data/data" + numIteration + ".arff", data);
+//        Instances dataTrain = data;
+        Instances dataTrain = new Instances(dataHead, dataPool.size());
+        for (Instance ins : dataPool) {
+            dataTrain.add(ins);
+        }
+
+        IO.saveInstances("data/data" + numIteration + ".arff", dataTrain);
 
         Classifier c = getBaseLearner();
         try {
-            c.buildClassifier(data);
+            c.buildClassifier(dataTrain);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
