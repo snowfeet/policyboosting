@@ -7,17 +7,15 @@ package example.acrobot;
 import core.State;
 import core.Task;
 import domain.acrobot.AcrobotTask;
-import static example.acrobot.TestBoostedPolicy.maxStep;
 import experiment.Experiment;
 import java.util.Random;
-import policy.BoostedPolicy;
-import policy.RankBoostPolicy;
+import policy.RankBoostMMPolicy;
 
 /**
  *
  * @author daq
  */
-public class TestRankBoostPolicy {
+public class TestRankBoostMMPolicy {
 
     static int maxStep = 1000;
     static boolean isPara = false;
@@ -29,8 +27,8 @@ public class TestRankBoostPolicy {
 
         Experiment exp = new Experiment();
 
-        RankBoostPolicy bp = new RankBoostPolicy(new Random(random.nextInt()));
-        bp.setStepsize(0.0005);
+        RankBoostMMPolicy bp = new RankBoostMMPolicy(new Random(random.nextInt()));
+        bp.setStepsize(0.000001);
 //        bp.setStepsize(0.005);
         
         exp.conductExperimentTrain(bp, task, 100, 50, initialState, maxStep, isPara, new Random(random.nextInt()));

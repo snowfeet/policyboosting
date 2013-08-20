@@ -26,7 +26,7 @@ import weka.core.Instances;
  *
  * @author daq
  */
-public class RankBoostPolicy extends GibbsPolicy {
+public class RankBoostPoolPolicy extends GibbsPolicy {
 
     private List<Double> alphas;
     private List<Classifier> potentialFunctions;
@@ -34,7 +34,7 @@ public class RankBoostPolicy extends GibbsPolicy {
     private double stepsize;
     private Instances dataHead = null;
 
-    public RankBoostPolicy(Random rand) {
+    public RankBoostPoolPolicy(Random rand) {
         numIteration = 0;
         alphas = new ArrayList<Double>();
         potentialFunctions = new ArrayList<Classifier>();

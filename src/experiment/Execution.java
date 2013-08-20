@@ -41,7 +41,7 @@ public class Execution {
             step = step + 1;
         }
 
-        Rollout rollout = new Rollout(task, samples, task.isComplete(sPrime) );
+        Rollout rollout = new Rollout(task, samples, maxStep, task.isComplete(sPrime) );
         rollout.setRewards((rewards + reward * (maxStep - step)));
         return rollout;
     }
