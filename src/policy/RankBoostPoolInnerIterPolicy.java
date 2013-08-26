@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package policy;
 
 import core.Action;
@@ -26,7 +22,7 @@ import weka.core.Instances;
  *
  * @author daq
  */
-public class RankBoostPoolPolicy extends GibbsPolicy {
+public class RankBoostPoolInnerIterPolicy extends GibbsPolicy {
 
     private List<Double> alphas;
     private List<Classifier> potentialFunctions;
@@ -37,13 +33,13 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
     private int poolSize;
     private int dataCounts;
 
-    public RankBoostPoolPolicy(Random rand) {
+    public RankBoostPoolInnerIterPolicy(Random rand) {
         numIteration = 0;
         alphas = new ArrayList<Double>();
         potentialFunctions = new ArrayList<Classifier>();
         random = rand;
         REPTree tree = new REPTree();
-        tree.setMaxDepth(100);
+        tree.setMaxDepth(30);
         base = tree;
         stepsize = 1;
 
@@ -98,6 +94,8 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         int K = t.actions.length;
 
         double[] probabilities = getProbability(s, t);
+
+
         return makeDecisionS(s, t, probabilities, thisRand);
     }
 
@@ -131,7 +129,7 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
                 m++;
             }
         }
-
+        
         return new PrabAction(bestAction, probabilities[bestAction]);
     }
 
@@ -156,7 +154,7 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
             }
         }
 
-//        if(numIteration == 1){
+//        if(numIteration == 2){
 //            for(int i=0;i<K;i++)
 //                System.err.print(utilities[i]+",");
 //            System.err.println();
@@ -193,6 +191,12 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
     @Override
     public void update(List<Rollout> rollouts) {
+        for (int i = 0; i < 10; i++) {
+            updateInner(rollouts);
+        }
+    }
+
+    public void updateInner(List<Rollout> rollouts) {
         List<double[]> features = new ArrayList<double[]>();
         List<Double> labels = new ArrayList<Double>();
         List<Double> weight = new ArrayList<Double>();
@@ -207,8 +211,6 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
             RZ += rollout.getRZ();
             ratios[i] = compuate_P_z_of_R_z(rollout);
             tildeP += ratios[i][0];
-            //System.out.println(ratios[i][0] + "  " + rollout.getRewards());
-            //rrrr += ratios[i][0] * rollout.getRewards();
         }
         //System.out.println(">>>>>"+tildeP+">>>>>"+rrrr/tildeP);
 
@@ -256,7 +258,7 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
         Instances data = new Instances(dataHead, features.size());
         for (int i = 0; i < features.size(); i++) {
-            Instance ins = contructInstance(features.get(i), labels.get(i) / Math.max(1, max_abs_label));
+            Instance ins = contructInstance(features.get(i), labels.get(i) / Math.max(1, 0.1*max_abs_label));
             data.add(ins);
         }
 
@@ -275,8 +277,10 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
             ex.printStackTrace();
         }
 
-        dataPool.clear();
-        dataCounts = 0;
+        if (numIteration % 2 == 0) {
+            dataPool.clear();
+            dataCounts = 0;
+        }
         for (int i = 0; i < features.size(); i++) {
             Instance ins = data.instance(i);
 
