@@ -109,16 +109,6 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         Random thisRand = outRand == null ? random : outRand;
         int K = t.actions.length;
 
-//        int bestAction = -1;
-//        double p = thisRand.nextDouble(), totalShare = 0;
-//        for (int k = 0; k < K; k++) {
-//            totalShare += probabilities[k];
-//            if (p <= totalShare) {
-//                bestAction = k;
-//                break;
-//            }
-//        }
-
         int bestAction = 0, m = 2;
         for (int k = 1; k < K; k++) {
             if (probabilities[k] > probabilities[bestAction] + Double.MIN_VALUE) {
@@ -200,17 +190,35 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         double[][] ratios = new double[rollouts.size()][];
 
         int numZ = rollouts.size();
-        double RZ = 0, tildeP = 0;
-        //double rrrr = 0;
         for (int i = 0; i < rollouts.size(); i++) {
             Rollout rollout = rollouts.get(i);
-            RZ += rollout.getRZ();
             ratios[i] = compuate_P_z_of_R_z(rollout);
-            tildeP += ratios[i][0];
-            //System.out.println(ratios[i][0] + "  " + rollout.getRewards());
-            //rrrr += ratios[i][0] * rollout.getRewards();
         }
-        //System.out.println(">>>>>"+tildeP+">>>>>"+rrrr/tildeP);
+
+        double[][] Jzz = new double[numZ][numZ];
+        for (int i = 0; i < numZ; i++) {
+            for (int j = i + 1; j < numZ; j++) {
+                Rollout rollout_i = rollouts.get(i);
+                Rollout rollout_j = rollouts.get(j);
+                double jzz = Math.exp(-(ratios[i][0] - ratios[j][0]) * (rollout_i.getRewards() - rollout_j.getRewards()));
+
+                Jzz[i][j] = Jzz[j][i] = jzz;
+            }
+        }
+
+        double[] Jz = new double[numZ];
+        double[] JzR = new double[numZ];
+        double[] JzGamma = new double[numZ];
+        for (int i = 0; i < numZ; i++) {
+            Jz[i] = 0;
+            JzR[i] = 0;
+            JzGamma[i] = 0;
+            for (int j = 0; j < numZ; j++) {
+                Jz[i] += Jzz[i][j];
+                JzR[i] += Jzz[i][j] * rollouts.get(j).getRewards();
+                JzGamma[i] += Jzz[i][j] * ratios[j][0];
+            }
+        }
 
         double max_abs_label = -1;
         for (int i = 0; i < rollouts.size(); i++) {
@@ -220,32 +228,19 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
             double R_z = rollout.getRewards();
 
-            double mean_r_z = R_z / rollout.getSamples().size();
-            double accumulated_rewards_sofar = 0;
             for (int step = 0; step < samples.size(); step++) {
                 Tuple sample = samples.get(step);
 
                 features.add(task.getSAFeature(sample.s, sample.action));
                 double prab = ((PrabAction) sample.action).probability;
-                double tilde_R_z = R_z - accumulated_rewards_sofar, tilde_RZ = RZ;
 
-                // 补偿rewards带来的修改
-                if (rollout.isIsSuccess()) {
-                    tilde_R_z += step * samples.get(samples.size() - 1).reward;
-                } else {
-                    tilde_R_z += step * mean_r_z;
-                }
-                //tilde_RZ += (tilde_R_z - R_z);
-
-                double label = (ratios[i][step] * (numZ * tilde_R_z - tilde_RZ) / prab + (ratios[i][step] * numZ - tildeP) * sample.reward) * prab * (1 - prab);
+                double label = ((Jz[i] * R_z - JzR[i]) * ratios[i][0] / prab + (Jz[i] * ratios[i][0] - JzGamma[i]) * sample.reward) * prab * (1 - prab);
                 labels.add(label);
                 weight.add(sample.reward);
 
                 if (Math.abs(label) > max_abs_label) {
                     max_abs_label = Math.abs(label);
                 }
-
-                accumulated_rewards_sofar += sample.reward;
             }
         }
 
@@ -266,7 +261,9 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
             dataTrain.add(ins);
         }
 
-        IO.saveInstances("data/data" + numIteration + ".arff", dataTrain);
+        if (numIteration < 10) {
+            IO.saveInstances("data/data" + numIteration + ".arff", dataTrain);
+        }
 
         Classifier c = getBaseLearner();
         try {
