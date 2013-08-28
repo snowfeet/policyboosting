@@ -9,7 +9,7 @@ import core.GibbsPolicy;
 import core.PrabAction;
 import core.State;
 import core.Task;
-import experiment.Rollout;
+import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -219,7 +219,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
     }
     
     @Override
-    public void update(List<Rollout> rollouts) {
+    public void update(List<Trajectory> rollouts) {
         int A = rollouts.get(0).getTask().actions.length;
         
         if (potentialFunctions == null) {
@@ -244,7 +244,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
         }
 
         // extract features
-        for (Rollout rollout : rollouts) {
+        for (Trajectory rollout : rollouts) {
             List<Tuple> samples = rollout.getSamples();
             
             double[][] utilities = getRolloutUtilities(rollout);
@@ -347,7 +347,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
         numIteration++;
     }
     
-    private double[][] getRolloutUtilities(Rollout rollout) {
+    private double[][] getRolloutUtilities(Trajectory rollout) {
         Task task = rollout.getTask();
         List<Tuple> samples = rollout.getSamples();
         
@@ -368,7 +368,7 @@ public class BoostedMuiltModelPolicy extends GibbsPolicy {
         return probabilities;
     }
     
-    private double[] compuate_P_z_of_D_z(Rollout rollout, double[][] probabilities) {
+    private double[] compuate_P_z_of_D_z(Trajectory rollout, double[][] probabilities) {
         boolean flag = numIteration < 0;
         if (flag) {
             System.out.println(rollout.getRewards());

@@ -11,15 +11,17 @@ import java.util.List;
  *
  * @author daq
  */
-public class Rollout {
+public class Trajectory implements Comparable<Trajectory> {
 
     private Task task;
     private List<Tuple> samples;
     private double rewards;
     private int maxStep;
     private boolean isSuccess;
+    List<double[]> features;
+    List<Double> labels;
 
-    public Rollout(Task task, List<Tuple> samples, int maxStep, boolean isSuccess) {
+    public Trajectory(Task task, List<Tuple> samples, int maxStep, boolean isSuccess) {
         this.task = task;
         this.samples = samples;
         this.maxStep = maxStep;
@@ -61,5 +63,26 @@ public class Rollout {
 
     public void setIsSuccess(boolean isSuccess) {
         this.isSuccess = isSuccess;
+    }
+
+    public void setFeatures(List<double[]> features) {
+        this.features = features;
+    }
+
+    public void setLabels(List<Double> labels) {
+        this.labels = labels;
+    }
+
+    public List<Double> getLabels() {
+        return labels;
+    }
+
+    public List<double[]> getFeatures() {
+        return features;
+    }
+
+    @Override
+    public int compareTo(Trajectory o) {
+        return new Double(o.getRewards()).compareTo(this.getRewards());
     }
 }

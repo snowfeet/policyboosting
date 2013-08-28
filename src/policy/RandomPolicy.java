@@ -7,7 +7,7 @@ package policy;
 import core.Action;
 import core.Policy;
 import core.PrabAction;
-import experiment.Rollout;
+import experiment.Trajectory;
 import core.State;
 import core.Task;
 import java.util.List;
@@ -61,7 +61,7 @@ public class RandomPolicy extends Policy {
     }
 
     @Override
-    public void update(List<Rollout> rollouts) {
+    public void update(List<Trajectory> rollouts) {
     }
 
     @Override

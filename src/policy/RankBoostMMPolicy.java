@@ -9,7 +9,7 @@ import core.GibbsPolicy;
 import core.PrabAction;
 import core.State;
 import core.Task;
-import experiment.Rollout;
+import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -188,7 +188,7 @@ public class RankBoostMMPolicy extends GibbsPolicy {
     }
 
     @Override
-    public void update(List<Rollout> rollouts) {
+    public void update(List<Trajectory> rollouts) {
         int A = rollouts.get(0).getTask().actions.length;
 
         if (potentialFunctions == null) {
@@ -205,7 +205,7 @@ public class RankBoostMMPolicy extends GibbsPolicy {
         int numZ = rollouts.size();
         double RZ = 0, tildeP = 0;
         for (int i = 0; i < rollouts.size(); i++) {
-            Rollout rollout = rollouts.get(i);
+            Trajectory rollout = rollouts.get(i);
             RZ += rollout.getRZ();
             ratios[i] = compuate_P_z_of_R_z(rollout);
             tildeP += ratios[i][0];
@@ -220,7 +220,7 @@ public class RankBoostMMPolicy extends GibbsPolicy {
 
         double max_abs_label = -1;
         for (int i = 0; i < rollouts.size(); i++) {
-            Rollout rollout = rollouts.get(i);
+            Trajectory rollout = rollouts.get(i);
             Task task = rollout.getTask();
             List<Tuple> samples = rollout.getSamples();
 
@@ -324,7 +324,7 @@ public class RankBoostMMPolicy extends GibbsPolicy {
         this.numIteration = Math.min(potentialFunctions[0].size(), numIteration);
     }
 
-    private double[] compuate_P_z_of_R_z(Rollout rollout) {
+    private double[] compuate_P_z_of_R_z(Trajectory rollout) {
         boolean flag = numIteration < 0;
         if (flag) {
             System.out.println(rollout.getRewards());

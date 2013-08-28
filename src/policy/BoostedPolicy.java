@@ -8,7 +8,7 @@ import core.Action;
 import core.GibbsPolicy;
 import core.Policy;
 import core.PrabAction;
-import experiment.Rollout;
+import experiment.Trajectory;
 import core.State;
 import core.Task;
 import experiment.Tuple;
@@ -173,11 +173,11 @@ public class BoostedPolicy extends GibbsPolicy {
     }
 
     @Override
-    public void update(List<Rollout> rollouts) {
+    public void update(List<Trajectory> rollouts) {
         List<double[]> features = new ArrayList<double[]>();
         List<Double> labels = new ArrayList<Double>();
 
-        for (Rollout rollout : rollouts) {
+        for (Trajectory rollout : rollouts) {
             Task task = rollout.getTask();
             List<Tuple> samples = rollout.getSamples();
 
@@ -235,7 +235,7 @@ public class BoostedPolicy extends GibbsPolicy {
         this.numIteration = Math.min(potentialFunctions.size(), numIteration);
     }
 
-    private double[] compuate_P_z_of_R_z(Rollout rollout) {
+    private double[] compuate_P_z_of_R_z(Trajectory rollout) {
         boolean flag = numIteration < 0;
         if (flag) {
             System.out.println(rollout.getRewards());

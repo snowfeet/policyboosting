@@ -12,7 +12,7 @@ import core.State;
 import core.Task;
 import experiment.Execution;
 import experiment.Experiment;
-import experiment.Rollout;
+import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +75,7 @@ public class NPPGPolicy extends GibbsPolicy {
 
     class ParallelExecute implements Runnable {
 
-        private Rollout rollout;
+        private Trajectory rollout;
         private Task task;
         private Policy policy;
         private State initialState;
@@ -95,7 +95,7 @@ public class NPPGPolicy extends GibbsPolicy {
                     initialState, policy, maxStep, true, random);//task, initialState, policy, maxStep, true, random);
         }
 
-        public Rollout getRollout() {
+        public Trajectory getRollout() {
             return rollout;
         }
     }
@@ -130,7 +130,7 @@ public class NPPGPolicy extends GibbsPolicy {
             long check2 = System.currentTimeMillis();
             System.out.println("collecting samples is done! Updating meta-policy...");
 
-            List<Rollout> rollouts = new ArrayList<Rollout>();
+            List<Trajectory> rollouts = new ArrayList<Trajectory>();
             int avaStep = 0;
             for (int i = 0; i < trialsPerIter; i++) {
                 rollouts.add(runs[i].getRollout());
@@ -155,7 +155,7 @@ public class NPPGPolicy extends GibbsPolicy {
     }
 
     @Override
-    public void update(List<Rollout> rollouts) {
+    public void update(List<Trajectory> rollouts) {
         double gamma = 1;
         List<double[]> features = new ArrayList<double[]>();
         List<Double> weights = new ArrayList<Double>();
@@ -163,7 +163,7 @@ public class NPPGPolicy extends GibbsPolicy {
 
         int LAST = (int) (stationaryRate * maxStep);
 
-        for (Rollout rollout : rollouts) {
+        for (Trajectory rollout : rollouts) {
             Task task = rollout.getTask();
             List<Tuple> samples = rollout.getSamples();
 

@@ -4,7 +4,7 @@
  */
 package core;
 
-import experiment.Rollout;
+import experiment.Trajectory;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
@@ -22,7 +22,7 @@ public abstract class Policy implements Serializable {
 
     public abstract Action makeDecisionD(State s, Task t, Random random);
 
-    public abstract void update(List<Rollout> rollouts);
+    public abstract void update(List<Trajectory> rollouts);
 
     public int getNumIteration() {
         return numIteration;

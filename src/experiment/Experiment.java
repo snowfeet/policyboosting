@@ -24,7 +24,7 @@ public class Experiment {
 
     class ParallelExecute implements Runnable {
 
-        private Rollout rollout;
+        private Trajectory rollout;
         private Task task;
         private Policy policy;
         private State initialState;
@@ -47,7 +47,7 @@ public class Experiment {
                     initialState, policy, maxStep, isStochastic, random);
         }
 
-        public Rollout getRollout() {
+        public Trajectory getRollout() {
             return rollout;
         }
     }
@@ -55,7 +55,7 @@ public class Experiment {
     public void conductExperimentTrain(Policy policy, Task task,
             int iteration, int trialsPerIter, State initialState, int maxStep,
             boolean isPara, Random random) {
-        List<Rollout> rolloutsFirst = null;
+        List<Trajectory> rolloutsFirst = null;
         for (int iter = 0; iter < iteration; iter++) {
             System.out.print("iter=" + iter + ", ");
             //  System.out.println("collecting samples...");
@@ -85,16 +85,16 @@ public class Experiment {
                 }
             }
 
-            List<Rollout> rollouts = new ArrayList<Rollout>();
+            List<Trajectory> rollouts = new ArrayList<Trajectory>();
             double averageReward = 0, averageStep = 0;
             for (ParallelExecute run : list) {
-                Rollout rollout = run.getRollout();
+                Trajectory rollout = run.getRollout();
                 rollouts.add(rollout);
 
                 double totalReward = rollout.getRewards();
                 averageReward += totalReward;
                 averageStep += rollout.getSamples().size();
-                //    System.out.print(totalReward+" ");                
+//                   System.out.print(totalReward+" ");                
             }
             averageReward /= list.size();
             averageStep /= list.size();
@@ -112,7 +112,7 @@ public class Experiment {
         }
     }
 
-    public static double[] calcRolloutObjective(Rollout rollout, GibbsPolicy policy) {
+    public static double[] calcRolloutObjective(Trajectory rollout, GibbsPolicy policy) {
         double[] obj = new double[3];
 
         double log_P_pi_z = 0;
@@ -130,10 +130,10 @@ public class Experiment {
         return obj;
     }
 
-    public static double[] calcObjective(List<Rollout> rollouts, GibbsPolicy policy) {
+    public static double[] calcObjective(List<Trajectory> rollouts, GibbsPolicy policy) {
         double[] objective = new double[3];
 
-        for (Rollout rollout : rollouts) {
+        for (Trajectory rollout : rollouts) {
             double[] obj = calcRolloutObjective(rollout, policy);
             for (int i = 0; i < obj.length; i++) {
                 System.err.print(obj[i] + ",");

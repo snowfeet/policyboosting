@@ -4,7 +4,7 @@
  */
 package core;
 
-import experiment.Rollout;
+import experiment.Trajectory;
 import java.util.List;
 import java.util.Random;
 import policy.BoostedPolicy;
@@ -73,7 +73,7 @@ public class EpsionGreedyExplorePolicy extends ExplorePolicy {
     }
 
     @Override
-    public void update(List<Rollout> rollouts) {
+    public void update(List<Trajectory> rollouts) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

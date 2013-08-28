@@ -8,7 +8,7 @@ import experiment.Execution;
 import core.State;
 import core.Task;
 import domain.mountaincar2d.MountainCarTask;
-import experiment.Rollout;
+import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.Random;
 import policy.RandomPolicy;
@@ -29,7 +29,7 @@ public class TestRandomPolicy {
         int trials = 50;
         double mean = 0;
         for (int i = 0; i < trials; i++) {
-            Rollout rollout = Execution.runTaskWithFixedStep(task, initialState, new RandomPolicy(new Random(random.nextInt())), maxStep, true, new Random(random.nextInt()));
+            Trajectory rollout = Execution.runTaskWithFixedStep(task, initialState, new RandomPolicy(new Random(random.nextInt())), maxStep, true, new Random(random.nextInt()));
             mean += rollout.getSamples().size();
             // System.out.println(rollout.getSamples().size());
         }

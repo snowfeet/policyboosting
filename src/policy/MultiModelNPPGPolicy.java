@@ -12,7 +12,7 @@ import core.State;
 import core.Task;
 import experiment.Execution;
 import experiment.Experiment;
-import experiment.Rollout;
+import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +70,7 @@ public class MultiModelNPPGPolicy extends GibbsPolicy {
 
     class ParallelExecute implements Runnable {
 
-        private Rollout rollout;
+        private Trajectory rollout;
         private Task task;
         private Policy policy;
         private State initialState;
@@ -90,7 +90,7 @@ public class MultiModelNPPGPolicy extends GibbsPolicy {
                     initialState, policy, maxStep, true, random);//task, initialState, policy, maxStep, true, random);
         }
 
-        public Rollout getRollout() {
+        public Trajectory getRollout() {
             return rollout;
         }
     }
@@ -125,7 +125,7 @@ public class MultiModelNPPGPolicy extends GibbsPolicy {
             long check2 = System.currentTimeMillis();
             System.out.println("collecting samples is done! Updating meta-policy...");
 
-            List<Rollout> rollouts = new ArrayList<Rollout>();
+            List<Trajectory> rollouts = new ArrayList<Trajectory>();
             int avaStep = 0;
             for (int i = 0; i < trialsPerIter; i++) {
                 rollouts.add(runs[i].getRollout());
@@ -173,7 +173,7 @@ public class MultiModelNPPGPolicy extends GibbsPolicy {
     }
 
     @Override
-    public void update(List<Rollout> rollouts) {
+    public void update(List<Trajectory> rollouts) {
         int A = rollouts.get(0).getTask().actions.length;
 
         if (potentialFunctions == null) {
@@ -194,7 +194,7 @@ public class MultiModelNPPGPolicy extends GibbsPolicy {
 
         int LAST = (int) (stationaryRate * maxStep);
 
-        for (Rollout rollout : rollouts) {
+        for (Trajectory rollout : rollouts) {
             Task task = rollout.getTask();
             List<Tuple> samples = rollout.getSamples();
 
@@ -332,7 +332,7 @@ public class MultiModelNPPGPolicy extends GibbsPolicy {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
         
-    private double[][] getRolloutUtilities(Rollout rollout) {
+    private double[][] getRolloutUtilities(Trajectory rollout) {
         Task task = rollout.getTask();
         List<Tuple> samples = rollout.getSamples();
 

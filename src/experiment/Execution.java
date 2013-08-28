@@ -19,7 +19,7 @@ import java.util.Random;
  */
 public class Execution {
 
-    public static Rollout runTaskWithFixedStep(Task task, State initalState, Policy policy, int maxStep, boolean isStochastic, Random random) {
+    public static Trajectory runTaskWithFixedStep(Task task, State initalState, Policy policy, int maxStep, boolean isStochastic, Random random) {
         List<Tuple> samples = new ArrayList<Tuple>();
 
         State s = null;
@@ -41,7 +41,7 @@ public class Execution {
             step = step + 1;
         }
 
-        Rollout rollout = new Rollout(task, samples, maxStep, task.isComplete(sPrime) );
+        Trajectory rollout = new Trajectory(task, samples, maxStep, task.isComplete(sPrime) );
         rollout.setRewards((rewards + reward * (maxStep - step)));
         return rollout;
     }
