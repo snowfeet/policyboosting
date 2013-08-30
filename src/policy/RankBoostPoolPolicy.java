@@ -40,7 +40,7 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
     private int bestPoolSize;
     private int uniformPoolSize;
     private int bestPoolCurSize;
-    private int uniformPoolIndex;
+    private int uniformPoolCurSize;
     private int uniformPoolCount;
 
     public RankBoostPoolPolicy(Random rand) {
@@ -53,14 +53,14 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         base = tree;
         stepsize = 1;
 
-        bestPoolSize = 50;
-        uniformPoolSize = 50;
+        bestPoolSize = 10;
+        uniformPoolSize = 10;
 
         bestPool = new Trajectory[bestPoolSize];
         uniformPool = new Trajectory[uniformPoolSize];
 
         bestPoolCurSize = 0;
-        uniformPoolIndex = 0;
+        uniformPoolCurSize = 0;
         uniformPoolCount = 0;
     }
 
@@ -191,20 +191,45 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
     @Override
     public void update(List<Trajectory> trajectories) {
-        double[][] ratios = new double[trajectories.size()][];
-
-        int numZ = trajectories.size();
+        // gather data to learn
+        List<Trajectory> trainTrajectories = new ArrayList<Trajectory>();
+        // current data
         for (int i = 0; i < trajectories.size(); i++) {
-            Trajectory trajectory = trajectories.get(i);
-            ratios[i] = compuate_P_z_of_R_z(trajectory);
+            trainTrajectories.add(trajectories.get(i));
         }
+        // best data
+        for (int i = 0; i < bestPoolCurSize; i++) {
+            trainTrajectories.add(bestPool[i]);
+        }
+        // uniform data
+        for (int i = 0; i < uniformPoolCurSize; i++) {
+            trainTrajectories.add(uniformPool[i]);
+        }
+
+        double[][] log_P_z = new double[trainTrajectories.size()][];
+
+        int numZ = trainTrajectories.size();
+
+        compuate_log_P_z(trainTrajectories, log_P_z);
+//        for (int i = 0; i < trainTrajectories.size(); i++) {
+//            Trajectory trajectory = trainTrajectories.get(i);
+//            ratios[i] = compuate_P_z_of_R_z(trajectory);
+//        }
 
         double[][] Jzz = new double[numZ][numZ];
         for (int i = 0; i < numZ; i++) {
             for (int j = i + 1; j < numZ; j++) {
-                Trajectory trajectory_i = trajectories.get(i);
-                Trajectory trajectory_j = trajectories.get(j);
-                double jzz = Math.exp(-(ratios[i][0] - ratios[j][0]) * (trajectory_i.getRewards() - trajectory_j.getRewards()));
+                Trajectory trajectory_i = trainTrajectories.get(i);
+                Trajectory trajectory_j = trainTrajectories.get(j);
+                double jzz = Math.exp(-(log_P_z[i][0] - log_P_z[j][0]) * (trajectory_i.getRewards() - trajectory_j.getRewards()));
+//                double jzz = 1;
+//                if(ratios[i][0] == ratios[j][0]){
+//                    System.err.println("non-zero!");
+//                }
+
+//                if (Double.isInfinite(jzz)) {
+//                    System.out.println(0x1);
+//                }
 
                 Jzz[i][j] = Jzz[j][i] = jzz;
             }
@@ -212,24 +237,24 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
         double[] Jz = new double[numZ];
         double[] JzR = new double[numZ];
-        double[] JzGamma = new double[numZ];
+        double[] JzLogP = new double[numZ];
         for (int i = 0; i < numZ; i++) {
             Jz[i] = 0;
             JzR[i] = 0;
-            JzGamma[i] = 0;
+            JzLogP[i] = 0;
             for (int j = 0; j < numZ; j++) {
                 Jz[i] += Jzz[i][j];
-                JzR[i] += Jzz[i][j] * trajectories.get(j).getRewards();
-                JzGamma[i] += Jzz[i][j] * ratios[j][0];
+                JzR[i] += Jzz[i][j] * trainTrajectories.get(j).getRewards();
+                JzLogP[i] += Jzz[i][j] * log_P_z[j][0];
             }
         }
 
         double max_abs_label = -1;
-        for (int i = 0; i < trajectories.size(); i++) {
+        for (int i = 0; i < trainTrajectories.size(); i++) {
             List<double[]> features = new ArrayList<double[]>();
             List<Double> labels = new ArrayList<Double>();
 
-            Trajectory trajectory = trajectories.get(i);
+            Trajectory trajectory = trainTrajectories.get(i);
             Task task = trajectory.getTask();
             List<Tuple> samples = trajectory.getSamples();
 
@@ -241,8 +266,11 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
                 features.add(task.getSAFeature(sample.s, sample.action));
                 double prab = ((PrabAction) sample.action).probability;
 
-                double label = ((Jz[i] * R_z - JzR[i]) * ratios[i][0] / prab + (Jz[i] * ratios[i][0] - JzGamma[i]) * sample.reward) * prab * (1 - prab);
+                double label = ((Jz[i] * R_z - JzR[i]) / prab + (Jz[i] * log_P_z[i][0] - JzLogP[i]) * sample.reward) * prab * (1 - prab);
                 labels.add(label);
+                if (Double.isNaN(label)) {
+                    System.out.println(2);
+                }
 
                 if (Math.abs(label) > max_abs_label) {
                     max_abs_label = Math.abs(label);
@@ -254,36 +282,30 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         }
 
         if (null == dataHead) {
-            int na = trajectories.get(0).getTask().actions.length;
-            dataHead = constructDataHead(trajectories.get(0).getFeatures().get(0).length, na);
+            int na = trainTrajectories.get(0).getTask().actions.length;
+            dataHead = constructDataHead(trainTrajectories.get(0).getFeatures().get(0).length, na);
         }
 
         Instances data = new Instances(dataHead);
-
-        // gather data to learn
-        {
-            List<Trajectory> trainTrajectories = new ArrayList<Trajectory>();
-            // current data
-            for (int i = 0; i < trajectories.size(); i++) {
-                trainTrajectories.add(trajectories.get(i));
-            }
-            // best data
-            for (int i = 0; i < bestPoolCurSize; i++) {
-                trainTrajectories.add(bestPool[i]);
-            }
-            for (int i = 0; i < uniformPoolIndex; i++) {
-                trainTrajectories.add(uniformPool[i]);
-            }
-
-            for (Trajectory trajectory : trainTrajectories) {
-                List<double[]> features = trajectory.getFeatures();
-                List<Double> labels = trajectory.getLabels();
-                for (int j = 0; j < features.size(); j++) {
+        for (Trajectory trajectory : trainTrajectories) {
+            List<double[]> features = trajectory.getFeatures();
+            List<Double> labels = trajectory.getLabels();
+            for (int j = 0; j < features.size(); j++) {
 //            Instance ins = contructInstance(features.get(j), labels.get(j) / Math.max(1, max_abs_label));
-                    Instance ins = contructInstance(features.get(j), labels.get(j));
-                    data.add(ins);
-                }
+                Instance ins = contructInstance(features.get(j), labels.get(j)/max_abs_label);
+                data.add(ins);
             }
+        }
+        if (numIteration < 10) {
+            IO.saveInstances("data/data" + numIteration + ".arff", data);
+        }
+
+        Classifier c = getBaseLearner();
+        try {
+            System.out.println("train size: " + data.numInstances());
+            c.buildClassifier(data);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         // sample for best and uniform
@@ -298,9 +320,9 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
             for (Trajectory trajectory : trajectories) {
                 // uniform
-                if (uniformPoolIndex < uniformPoolSize) {
-                    uniformPool[uniformPoolIndex] = trajectory;
-                    uniformPoolIndex++;
+                if (uniformPoolCurSize < uniformPoolSize) {
+                    uniformPool[uniformPoolCurSize] = trajectory;
+                    uniformPoolCurSize++;
                 } else {
                     int repInd = random.nextInt(uniformPoolCount);
                     if (repInd < uniformPoolSize) {
@@ -311,21 +333,10 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
             }
         }
 
-        if (numIteration < 10) {
-            IO.saveInstances("data/data" + numIteration + ".arff", data);
-        }
-
-        Classifier c = getBaseLearner();
-        try {
-            c.buildClassifier(data);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
         double objective = 0;
-        for (int i = 0; i < trajectories.size(); i++) {
-            Trajectory trajectory = trajectories.get(i);
-            objective += ratios[i][0] * trajectory.getRewards();
+        for (int i = 0; i < trainTrajectories.size(); i++) {
+            Trajectory trajectory = trainTrajectories.get(i);
+            objective += log_P_z[i][0] * trajectory.getRewards();
         }
         System.err.println(objective);
         //System.err.println(potentialFunctions.size());
@@ -351,12 +362,6 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
     }
 
     private double[] compuate_P_z_of_R_z(Trajectory trajectory) {
-        boolean flag = numIteration < 0;
-        if (flag) {
-            System.out.println(trajectory.getRewards());
-            int x = 1;
-        }
-
         int T = trajectory.getSamples().size();
         double[] P_z = new double[T];
         double[] D_z = new double[T];
@@ -378,15 +383,83 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
             sumD += Math.log(D_z[i]);
 
             R_z[i] = Math.exp(sumP - sumD);
-            if (flag) {
-                System.out.println(P_z[i] + "\t" + D_z[i] + "\t" + R_z[i]);
+        }
+
+        return R_z;
+    }
+
+    private void compuate_P_z(List<Trajectory> trainTrajectories, double[][] P_z) {
+        int numTraj = trainTrajectories.size();
+        double[] log_P_z = new double[numTraj];
+        double mean_log_P_z = 0, max_log_P_z = Double.NEGATIVE_INFINITY, min_log_P_z = Double.POSITIVE_INFINITY;
+        for (int i = 0; i < numTraj; i++) {
+            P_z[i] = new double[1];
+            Trajectory trajectory = trainTrajectories.get(i);
+
+            log_P_z[i] = 0;
+            int T = trajectory.getSamples().size();
+            for (int t = 0; t < T; t++) {
+                Tuple tuple = trajectory.getSamples().get(t);
+                double[] probabilities = getProbability(tuple.s, trajectory.getTask());
+                log_P_z[i] += Math.log(probabilities[tuple.action.a]);
+            }
+
+            mean_log_P_z += log_P_z[i];
+
+            if (log_P_z[i] > max_log_P_z) {
+                max_log_P_z = log_P_z[i];
+            }
+
+            if (log_P_z[i] < min_log_P_z) {
+                min_log_P_z = log_P_z[i];
+            }
+        }
+        mean_log_P_z /= numTraj;
+
+//        double max_value = 0;
+//        for (int i = 0; i < numTraj; i++) {
+//            P_z[i][0] = log_P_z[i] - max_log_P_z;
+//            if (Math.abs(P_z[i][0]) > max_value) {
+//                max_value = Math.abs(P_z[i][0]);
+//            }
+//        }
+
+//        if (max_value > 1) {
+        for (int i = 0; i < numTraj; i++) {
+            P_z[i][0] = 500000;
+//               P_z[i][0] = Math.exp(P_z[i][0]);
+//             P_z[i][0] = (log_P_z[i] - min_log_P_z) / (max_log_P_z - min_log_P_z);
+        }
+//        }
+    }
+
+    private void compuate_log_P_z(List<Trajectory> trainTrajectories, double[][] log_P_z) {
+        int numTraj = trainTrajectories.size();
+        double max_log_P_z = Double.NEGATIVE_INFINITY, min_log_P_z = Double.POSITIVE_INFINITY;
+        for (int i = 0; i < numTraj; i++) {
+            log_P_z[i] = new double[1];
+            Trajectory trajectory = trainTrajectories.get(i);
+
+            log_P_z[i][0] = 0;
+            int T = trajectory.getSamples().size();
+            for (int t = 0; t < T; t++) {
+                Tuple tuple = trajectory.getSamples().get(t);
+                double[] probabilities = getProbability(tuple.s, trajectory.getTask());
+               log_P_z[i][0] += Math.log(probabilities[tuple.action.a]);
+            }
+            
+            if (log_P_z[i][0] > max_log_P_z) {
+                max_log_P_z = log_P_z[i][0];
+            }
+
+            if (log_P_z[i][0] < min_log_P_z) {
+                min_log_P_z = log_P_z[i][0];
             }
         }
 
-        if (flag) {
-            System.out.println(R_z[0]);
-            System.exit(1);
+        for (int i = 0; i < numTraj; i++) {
+//             log_P_z[i][0] = (log_P_z[i][0] - min_log_P_z) / (max_log_P_z - min_log_P_z);
+             log_P_z[i][0] /= 1000;
         }
-        return R_z;
     }
 }

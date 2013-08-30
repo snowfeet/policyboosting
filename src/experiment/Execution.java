@@ -42,7 +42,7 @@ public class Execution {
         }
 
         Trajectory rollout = new Trajectory(task, samples, maxStep, task.isComplete(sPrime) );
-        rollout.setRewards((rewards + reward * (maxStep - step)));
+        rollout.setRewards((rewards + reward * (maxStep - step))/maxStep);
         return rollout;
     }
 }

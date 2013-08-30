@@ -20,6 +20,7 @@ public class Trajectory implements Comparable<Trajectory> {
     private boolean isSuccess;
     List<double[]> features;
     List<Double> labels;
+    private int producedIteration;
 
     public Trajectory(Task task, List<Tuple> samples, int maxStep, boolean isSuccess) {
         this.task = task;
@@ -79,6 +80,14 @@ public class Trajectory implements Comparable<Trajectory> {
 
     public List<double[]> getFeatures() {
         return features;
+    }
+
+    public int getProducedIteration() {
+        return producedIteration;
+    }
+
+    public void setProducedIteration(int producedIteration) {
+        this.producedIteration = producedIteration;
     }
 
     @Override
