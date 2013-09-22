@@ -11,6 +11,11 @@ package core;
 public class Action {
 
     public int a;
+    public double[] controls;
+
+    public Action(double[] controls) {
+        this.controls = controls;
+    }
 
     public Action(int a) {
         this.a = a;

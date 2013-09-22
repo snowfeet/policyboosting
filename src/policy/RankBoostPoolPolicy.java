@@ -13,7 +13,6 @@ import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import utills.IO;
@@ -343,7 +342,10 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
         int t = alphas.size() + 1;
 //        alphas.add(stepsize / Math.sqrt(t));
+        
+        //line search
         alphas.add(stepsize);
+        
         potentialFunctions.add(c);
         numIteration++;
     }
@@ -435,7 +437,7 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
 
     private void compuate_log_P_z(List<Trajectory> trainTrajectories, double[][] log_P_z) {
         int numTraj = trainTrajectories.size();
-        double max_log_P_z = Double.NEGATIVE_INFINITY, min_log_P_z = Double.POSITIVE_INFINITY;
+        double mean_log_P_z = 0, max_log_P_z = Double.NEGATIVE_INFINITY, min_log_P_z = Double.POSITIVE_INFINITY;
         for (int i = 0; i < numTraj; i++) {
             log_P_z[i] = new double[1];
             Trajectory trajectory = trainTrajectories.get(i);
@@ -447,6 +449,7 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
                 double[] probabilities = getProbability(tuple.s, trajectory.getTask());
                log_P_z[i][0] += Math.log(probabilities[tuple.action.a]);
             }
+//            log_P_z[i][0] = Math.exp(log_P_z[i][0]);
             
             if (log_P_z[i][0] > max_log_P_z) {
                 max_log_P_z = log_P_z[i][0];
@@ -455,11 +458,14 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
             if (log_P_z[i][0] < min_log_P_z) {
                 min_log_P_z = log_P_z[i][0];
             }
+            
+            mean_log_P_z += log_P_z[i][0];
         }
+//        mean_log_P_z /= numTraj;
 
         for (int i = 0; i < numTraj; i++) {
 //             log_P_z[i][0] = (log_P_z[i][0] - min_log_P_z) / (max_log_P_z - min_log_P_z);
-             log_P_z[i][0] /= 1000;
+             log_P_z[i][0] /= 1000;//-Math.abs(mean_log_P_z);
         }
     }
 }

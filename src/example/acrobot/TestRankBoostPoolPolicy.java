@@ -18,13 +18,13 @@ import policy.RankBoostPoolPolicy;
  */
 public class TestRankBoostPoolPolicy {
 
-    static int maxStep = 4000;
+    static int maxStep = 2000;
     static boolean isPara = false;
 
     public static void main(String[] args) throws Exception {
         Random random = new Random();
-//        Task task = new AcrobotTask(new Random(random.nextInt()));
-        Task task = new MountainCarTask(new Random(random.nextInt()));
+        Task task = new AcrobotTask(new Random(random.nextInt()));
+//        Task task = new MountainCarTask(new Random(random.nextInt()));
         State initialState = task.getInitialState();
 
         Experiment exp = new Experiment();
