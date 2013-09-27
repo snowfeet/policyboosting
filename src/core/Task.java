@@ -14,6 +14,8 @@ import java.util.Random;
 public abstract class Task implements Serializable {
 
     public Action[] actions;
+    
+    public int actionDim;
 
     public abstract State getInitialState();
 

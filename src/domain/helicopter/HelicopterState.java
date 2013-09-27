@@ -53,6 +53,7 @@ public class HelicopterState extends State {
     public double[] noise = new double[6];
 
     public HelicopterState() {
+        reset();
     }
 
     public HelicopterState(boolean env_terminal, int num_sim_steps,

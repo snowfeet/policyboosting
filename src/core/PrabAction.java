@@ -12,6 +12,11 @@ public class PrabAction extends Action {
 
     public double probability;
 
+    public PrabAction(double[] controls, double probability) {
+        super(controls);
+        this.probability = probability;
+    }
+
     public PrabAction(int a, double probability) {
         super(a);
         this.probability = probability;
@@ -19,6 +24,11 @@ public class PrabAction extends Action {
 
     public PrabAction(Action action, double probability) {
         super(action.a);
+        this.probability = probability;
+    }
+
+    public PrabAction(Action action, double probability, boolean isCA) {
+        super(action.controls);
         this.probability = probability;
     }
 

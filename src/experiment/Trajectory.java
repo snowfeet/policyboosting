@@ -20,6 +20,7 @@ public class Trajectory implements Comparable<Trajectory> {
     private boolean isSuccess;
     List<double[]> features;
     List<Double> labels;
+    List<Double>[] multiModelLabels;
     private int producedIteration;
 
     public Trajectory(Task task, List<Tuple> samples, int maxStep, boolean isSuccess) {
@@ -88,6 +89,14 @@ public class Trajectory implements Comparable<Trajectory> {
 
     public void setProducedIteration(int producedIteration) {
         this.producedIteration = producedIteration;
+    }
+
+    public List<Double>[] getMultiModelLabels() {
+        return multiModelLabels;
+    }
+
+    public void setMultiModelLabels(List<Double>[] multiModelLabels) {
+        this.multiModelLabels = multiModelLabels;
     }
 
     @Override

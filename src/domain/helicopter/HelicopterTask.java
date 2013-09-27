@@ -51,9 +51,14 @@ public class HelicopterTask extends Task {
     double wind[] = new double[2];
     Random randomNumberGenerator = new Random();
 
+    public HelicopterTask(Random random) {
+        randomNumberGenerator = random;
+        actionDim = 4;
+    }
+
     @Override
     public State getInitialState() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new HelicopterState();
     }
 
     @Override
