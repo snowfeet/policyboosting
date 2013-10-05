@@ -7,7 +7,6 @@ package core;
 import experiment.Trajectory;
 import java.util.List;
 import java.util.Random;
-import policy.BoostedPolicy;
 import policy.RandomPolicy;
 
 /**

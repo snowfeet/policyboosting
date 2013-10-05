@@ -5,6 +5,7 @@
 package policy;
 
 import core.Action;
+import core.ParallelTrain;
 import core.Policy;
 import core.PrabAction;
 import core.State;
@@ -12,9 +13,11 @@ import core.Task;
 import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import utills.IO;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.REPTree;
@@ -90,7 +93,7 @@ public class RankBoostPoolCAPolicy extends Policy {
         }
 
         Random thisRand = outRand == null ? random : outRand;
-        
+
         double[] utilities = getUtility(s, t);
         double[] controls = sampleFromGaussian(utilities, thisRand);
         Action action = new Action(controls);
@@ -170,10 +173,6 @@ public class RankBoostPoolCAPolicy extends Policy {
         int numZ = trainTrajectories.size();
 
         compuate_log_P_z(trainTrajectories, log_P_z);
-//        for (int i = 0; i < trainTrajectories.size(); i++) {
-//            Trajectory trajectory = trainTrajectories.get(i);
-//            ratios[i] = compuate_P_z_of_R_z(trajectory);
-//        }
 
         double[][] Jzz = new double[numZ][numZ];
         for (int i = 0; i < numZ; i++) {
@@ -181,14 +180,6 @@ public class RankBoostPoolCAPolicy extends Policy {
                 Trajectory trajectory_i = trainTrajectories.get(i);
                 Trajectory trajectory_j = trainTrajectories.get(j);
                 double jzz = Math.exp(-(log_P_z[i][0] - log_P_z[j][0]) * (trajectory_i.getRewards() - trajectory_j.getRewards()));
-//                double jzz = 1;
-//                if(ratios[i][0] == ratios[j][0]){
-//                    System.err.println("non-zero!");
-//                }
-
-//                if (Double.isInfinite(jzz)) {
-//                    System.out.println(0x1);
-//                }
 
                 Jzz[i][j] = Jzz[j][i] = jzz;
             }
@@ -256,25 +247,29 @@ public class RankBoostPoolCAPolicy extends Policy {
             }
         }
 
+        ExecutorService exec = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors() - 1);
+        List<ParallelTrain> rList = new ArrayList<ParallelTrain>();
         for (int k = 0; k < trajectories.get(0).getTask().actionDim; k++) {
             Instances data = new Instances(dataHead);
             for (Trajectory trajectory : trainTrajectories) {
                 List<double[]> features = trajectory.getFeatures();
                 List<Double>[] multiModelLabels = trajectory.getMultiModelLabels();
                 for (int j = 0; j < features.size(); j++) {
-//            Instance ins = contructInstance(features.get(j), labels.get(j) / Math.max(1, max_abs_label));
                     Instance ins = contructInstance(features.get(j), multiModelLabels[k].get(j) / max_abs_label);
                     data.add(ins);
                 }
             }
-            if (numIteration < 10) {
-                IO.saveInstances("data/data" + numIteration + ".arff", data);
-            }
+//            if (numIteration < 10) {
+//                IO.saveInstances("data/data" + numIteration + ".arff", data);
+//            }
 
             Classifier c = getBaseLearner();
             try {
                 System.out.println("train size: " + data.numInstances());
-                c.buildClassifier(data);
+                ParallelTrain run = new ParallelTrain(c, data);
+                rList.add(run);
+                exec.execute(run);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -308,6 +303,15 @@ public class RankBoostPoolCAPolicy extends Policy {
 
             potentialFunctions[k].add(c);
         }
+
+        exec.shutdown();
+        try {
+            while (!exec.awaitTermination(10, TimeUnit.SECONDS)) {
+            }
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
+
         numIteration++;
     }
 
@@ -359,19 +363,21 @@ public class RankBoostPoolCAPolicy extends Policy {
 
     private double getProbability(State s, Action action, Task task) {
         double[] utilities = getUtility(s, task);
-        
+
         double prob = 1 / (Math.sqrt(Math.PI * 2) * sigma);
-        for(int i=0;i<utilities.length;i++)
+        for (int i = 0; i < utilities.length; i++) {
             prob = prob * Math.exp(-(action.controls[i] - utilities[i]) * (action.controls[i] - utilities[i]) / (sigma * sigma));
+        }
         return 1;
     }
 
     private double[] sampleFromGaussian(double[] utilities, Random thisRand) {
         double[] controls = new double[utilities.length];
-        
-        for(int i=0;i<controls.length;i++)
+
+        for (int i = 0; i < controls.length; i++) {
             controls[i] = utilities[i] + thisRand.nextGaussian() * sigma;
-        
+        }
+
         return controls;
     }
 }

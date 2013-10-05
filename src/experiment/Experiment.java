@@ -16,6 +16,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import utills.Stats;
 
 /**
  *
@@ -53,15 +54,16 @@ public class Experiment {
         }
     }
 
-    public void conductExperimentTrain(Policy policy, Task task,
+    public double[][] conductExperimentTrain(Policy policy, Task task,
             int iteration, int trialsPerIter, State initialState, int maxStep,
-            boolean isPara, Random random) {
+            boolean isPara, double epsion, Random random) {
+        double[][] results = new double[iteration][5];
         List<Trajectory> rolloutsFirst = null;
         for (int iter = 0; iter < iteration; iter++) {
+            results[iter][0] = iter;
             System.out.print("iter=" + iter + ", ");
-            //  System.out.println("collecting samples...");
 
-            Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, 0.0, new Random(random.nextInt()));
+            Policy explorePolicy = new EpsionGreedyExplorePolicy(policy, epsion, new Random(random.nextInt()));
             List<ParallelExecute> list = new ArrayList<ParallelExecute>();
 
             ExecutorService exec = Executors.newFixedThreadPool(
@@ -87,22 +89,26 @@ public class Experiment {
             }
 
             List<Trajectory> rollouts = new ArrayList<Trajectory>();
-            double averageReward = 0, averageStep = 0;
+            double[] rewards = new double[list.size()];
+            double[] steps = new double[list.size()];
+            int cc = 0;
             for (ParallelExecute run : list) {
                 Trajectory rollout = run.getRollout();
                 rollout.setProducedIteration(iter);
                 rollouts.add(rollout);
 
                 double totalReward = rollout.getRewards();
-                averageReward += totalReward;
-                averageStep += rollout.getSamples().size();
-//                   System.out.print(totalReward+" ");                
+                rewards[cc] = totalReward;
+                steps[cc] = rollout.getSamples().size();
+                cc++;
             }
-            averageReward /= list.size();
-            averageStep /= list.size();
-            System.out.println("Average Total Rewards = " + averageReward + ", Average step = " + averageStep);
-            // System.out.println();
-            // System.out.println("collecting samples is done! Updating meta-policy...");
+            double[] meanStdReward = Stats.mean_std(rewards);
+            double[] meanStdStep = Stats.mean_std(steps);
+            results[iter][1] = meanStdReward[0];
+            results[iter][2] = meanStdReward[1];
+            results[iter][3] = meanStdStep[0];
+            results[iter][4] = meanStdStep[1];
+            System.out.println("Average Total Rewards = " + meanStdReward[0] + ", Average step = " + meanStdStep[0]);
 
 //            if (iter == 0) {
 //                rolloutsFirst = rollouts;
@@ -112,12 +118,14 @@ public class Experiment {
 
             policy.update(rollouts);
 
-            ParallelExecute run = new ParallelExecute(task, policy,
-                    initialState, maxStep, true, random.nextInt());
-            run.run();
-            Trajectory rollout = run.getRollout();
-            System.err.println("DDDD " + rollout.getRewards());
+//            ParallelExecute run = new ParallelExecute(task, policy,
+//                    initialState, maxStep, true, random.nextInt());
+//            run.run();
+//            Trajectory rollout = run.getRollout();
+//            System.err.println("DDDD " + rollout.getRewards());
         }
+
+        return results;
     }
 
     public void conductExperimentTrainCA(Policy policy, Task task,

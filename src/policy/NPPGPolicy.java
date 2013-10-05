@@ -6,22 +6,15 @@ package policy;
 
 import core.Action;
 import core.GibbsPolicy;
-import core.Policy;
 import core.PrabAction;
 import core.State;
 import core.Task;
-import experiment.Execution;
-import experiment.Experiment;
 import experiment.Trajectory;
 import experiment.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import weka.classifiers.Classifier;
-import weka.classifiers.meta.Bagging;
 import weka.classifiers.trees.REPTree;
 import weka.core.Attribute;
 import weka.core.FastVector;
@@ -35,7 +28,6 @@ import weka.core.Instances;
 public class NPPGPolicy extends GibbsPolicy {
 
     private static final long serialVersionUID = 2259079722984917190l;
-    private RandomPolicy rp;
     private List<Double> alphas;
     private List<Classifier> potentialFunctions;
     private Classifier base;
@@ -47,111 +39,19 @@ public class NPPGPolicy extends GibbsPolicy {
     int maxStep;
 
     public NPPGPolicy(Random rand) {
-        rp = new RandomPolicy(new Random(rand.nextInt()));
         numIteration = 0;
         alphas = new ArrayList<Double>();
         potentialFunctions = new ArrayList<Classifier>();
         random = rand;
 
-        REPTree reptree = new REPTree();
-        reptree.setMaxDepth(100);
-
-        Bagging bag = new Bagging();
-        bag.setClassifier(reptree);
-        bag.setNumIterations(10);
-
-        base = bag;
+        REPTree tree = new REPTree();
+        tree.setMaxDepth(100);
+        base = tree;
 
         stepsize = 1;
         stationaryRate = 0.8;
         epsionGreedy = 0.1;
         epsionGreedyDecay = 1;
-    }
-
-    @Override
-    public PrabAction makeDecisionS(State s, Task t, double[] probabilities, Random outRand) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    class ParallelExecute implements Runnable {
-
-        private Trajectory rollout;
-        private Task task;
-        private Policy policy;
-        private State initialState;
-        private int maxStep;
-        private Random random;
-
-        public ParallelExecute(Task task, Policy policy, State initialState, int maxStep, int seed) {
-            this.task = task;
-            this.policy = policy;
-            this.initialState = initialState;
-            this.maxStep = maxStep;
-            this.random = new Random(seed);
-        }
-
-        public void run() {
-            rollout = Execution.runTaskWithFixedStep(task,
-                    initialState, policy, maxStep, true, random);//task, initialState, policy, maxStep, true, random);
-        }
-
-        public Trajectory getRollout() {
-            return rollout;
-        }
-    }
-
-    public long[] train(Task task, int iteration, int trialsPerIter, State initialState, int maxStep, boolean isPara, Random random) {
-        this.maxStep = maxStep;
-        long[] time = new long[iteration];
-        for (int iter = 0; iter < iteration; iter++) {
-            System.out.println("iter=" + iter);
-            System.out.println("collecting samples...");
-
-            long check1 = System.currentTimeMillis();
-            ParallelExecute[] runs = new ParallelExecute[trialsPerIter];
-            ExecutorService exec = Executors.newFixedThreadPool(23);
-            for (int i = 0; i < trialsPerIter; i++) {
-                runs[i] = new ParallelExecute(task, this, task.getInitialState(), maxStep, random.nextInt());
-                if (isPara) {
-                    exec.execute(runs[i]);
-                } else {
-                    runs[i].run();
-                }
-            }
-            if (isPara) {
-                exec.shutdown();
-                try {
-                    while (!exec.awaitTermination(10, TimeUnit.SECONDS)) {
-                    }
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-            }
-            long check2 = System.currentTimeMillis();
-            System.out.println("collecting samples is done! Updating meta-policy...");
-
-            List<Trajectory> rollouts = new ArrayList<Trajectory>();
-            int avaStep = 0;
-            for (int i = 0; i < trialsPerIter; i++) {
-                rollouts.add(runs[i].getRollout());
-                System.out.print(runs[i].getRollout().getSamples().size() + " ");
-                avaStep += runs[i].getRollout().getSamples().size();
-            }
-            System.out.println("\n -> " + avaStep / trialsPerIter);
-
-            double[] obj = Experiment.calcObjective(rollouts, this);
-            System.out.println("objective value of iter " + iter + " before updating is " + obj[0] + "," + obj[1] + "," + obj[2]);
-
-            long check3 = System.currentTimeMillis();
-            update(rollouts);
-            long check4 = System.currentTimeMillis();
-
-            obj = Experiment.calcObjective(rollouts, this);
-            System.out.println("objective value of iter " + iter + " after updating is " + obj[0] + "," + obj[1] + "," + obj[2]);
-            
-            time[iter] = check2 - check1 + check4 - check3;
-        }
-        return time;
     }
 
     @Override
@@ -186,7 +86,7 @@ public class NPPGPolicy extends GibbsPolicy {
         for (int i = 0; i < features.size(); i++) {
             double pi = weights.get(i);
             double Q = QHat.get(i);
-            Instance ins = contructInstance(features.get(i), Q * pi * (1 - pi), 1.0);
+            Instance ins = contructInstance(features.get(i), Q * pi * (1 - pi));
             data.add(ins);
         }
 //        IO.saveInstances("gb_data" + numIteration + ".arff", data);
@@ -217,58 +117,83 @@ public class NPPGPolicy extends GibbsPolicy {
 
     @Override
     public Action makeDecisionD(State s, Task t, Random outRand) {
-        Random thisRand = outRand == null ? random : outRand;
-        int A = t.actions.length;
-
         if (numIteration == 0) {
-            return rp.makeDecisionS(s, t, thisRand);
-        } else {
-            double[] probabilities = getProbability(s, t);
-
-            int bestAction = 0, num_ties = 1;
-            for (int a = 1; a < A; a++) {
-                double value = probabilities[a];
-                if (value >= probabilities[bestAction]) {
-                    if (value > probabilities[bestAction] + Double.MIN_VALUE) {
-                        bestAction = a;
-                    } else {
-                        num_ties++;
-                        if (0 == thisRand.nextInt(num_ties)) {
-                            bestAction = a;
-                        }
-                    }
-                }
-            }
-
-            return new PrabAction(bestAction, probabilities[bestAction]);
+            return null;
         }
+
+        Random thisRand = outRand == null ? random : outRand;
+        int K = t.actions.length;
+
+        double[] probabilities = getProbability(s, t);
+        int bestAction = 0, m = 2;
+        for (int k = 1; k < K; k++) {
+            if (probabilities[k] > probabilities[bestAction] + Double.MIN_VALUE) {
+                bestAction = k;
+                m = 2;
+            } else if (Math.abs(probabilities[k] - probabilities[bestAction]) <= Double.MIN_VALUE) {
+                if (thisRand.nextDouble() < 1.0 / m) {
+                    bestAction = k;
+                }
+                m++;
+            }
+        }
+
+        return new Action(bestAction);
     }
 
     @Override
     public PrabAction makeDecisionS(State s, Task t, Random outRand) {
-        Random thisRand = outRand == null ? random : outRand;
-        if (numIteration == 0 || thisRand.nextDouble() < epsionGreedy) {
-            return rp.makeDecisionS(s, t, thisRand);
-        } else {
-            return (PrabAction) (makeDecisionD(s, t, outRand));
+        if (numIteration == 0) {
+            return null;
         }
+
+        Random thisRand = outRand == null ? random : outRand;
+        int K = t.actions.length;
+
+        double[] probabilities = getProbability(s, t);
+        return makeDecisionS(s, t, probabilities, thisRand);
     }
 
+    @Override
+    public PrabAction makeDecisionS(State s, Task t, double[] probabilities, Random outRand) {
+        if (numIteration == 0 || probabilities == null) {
+            return null;
+        }
+
+        Random thisRand = outRand == null ? random : outRand;
+        int K = t.actions.length;
+
+        int bestAction = 0, m = 2;
+        for (int k = 1; k < K; k++) {
+            if (probabilities[k] > probabilities[bestAction] + Double.MIN_VALUE) {
+                bestAction = k;
+                m = 2;
+            } else if (Math.abs(probabilities[k] - probabilities[bestAction]) <= Double.MIN_VALUE) {
+                if (thisRand.nextDouble() < 1.0 / m) {
+                    bestAction = k;
+                }
+                m++;
+            }
+        }
+
+        return new PrabAction(bestAction, probabilities[bestAction]);
+    }
+
+    @Override
     public double[] getUtility(State s, Task t) {
-        int A = t.actions.length;
-        double[] utilities = new double[A];
-        for (int a = 0; a < A; a++) {
-            double[] stateActionFeature = t.getSAFeature(s, new Action(a));
-            Instance ins = contructInstance(stateActionFeature, 0, 1.0);
+        int K = t.actions.length;
+        double[] utilities = new double[K];
+        for (int k = 0; k < K; k++) {
+            double[] stateActionFeature = t.getSAFeature(s, new Action(k));
+            Instance ins = contructInstance(stateActionFeature, 0);
             if (null == dataHead) {
-                int na = t.actions.length;
-                dataHead = constructDataHead(stateActionFeature.length, na);
+                dataHead = constructDataHead(stateActionFeature.length, K);
             }
             ins.setDataset(dataHead);
-            utilities[a] = 0;
+            utilities[k] = 0;
             for (int j = 0; j < numIteration; j++) {
                 try {
-                    utilities[a] += alphas.get(j) * potentialFunctions.get(j).classifyInstance(ins);
+                    utilities[k] += alphas.get(j) * potentialFunctions.get(j).classifyInstance(ins);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -278,16 +203,16 @@ public class NPPGPolicy extends GibbsPolicy {
         return utilities;
     }
 
-    public static Instance contructInstance(double[] stateActionTaskFeature, double label, double weight) {
+    private Instance contructInstance(double[] stateActionTaskFeature, double label) {
         int D = stateActionTaskFeature.length;
         double[] values = new double[D + 1];
         values[D] = label;
         System.arraycopy(stateActionTaskFeature, 0, values, 0, D);
-        Instance ins = new Instance(weight, values);
+        Instance ins = new Instance(1.0, values);
         return ins;
     }
 
-    public static Instances constructDataHead(int D, int na) {
+    public Instances constructDataHead(int D, int na) {
         FastVector attInfo_x = new FastVector();
         for (int i = 0; i < D - 1; i++) {
             attInfo_x.addElement(new Attribute("att_" + i, i));
@@ -340,5 +265,9 @@ public class NPPGPolicy extends GibbsPolicy {
 
     public void setStationaryRate(double stationaryRate) {
         this.stationaryRate = stationaryRate;
+    }
+
+    public void setMaxStep(int maxStep) {
+        this.maxStep = maxStep;
     }
 }

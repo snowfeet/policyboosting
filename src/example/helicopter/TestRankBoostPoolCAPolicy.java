@@ -12,7 +12,7 @@ import java.util.Random;
 import policy.RankBoostPoolCAPolicy;
 
 /**
- *
+ * example.helicopter.TestRankBoostPoolCAPolicy
  * @author daq
  */
 public class TestRankBoostPoolCAPolicy {
