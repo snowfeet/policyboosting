@@ -47,7 +47,7 @@ public class HelicopterTask extends Task {
     final double heli_model_u3_w = -42.15;
     final double heli_model_tail_rotor_side_thrust = -0.54;
     final double DT = .1; // simulation time scale  [time scale for control --- internally we integrate at 100Hz for simulating the dynamics]
-    final static int NUM_SIM_STEPS_PER_EPISODE = 6000; // after 6000 steps we automatically enter the terminal state
+    final static int NUM_SIM_STEPS_PER_EPISODE = 8000; // after 6000 steps we automatically enter the terminal state
     double wind[] = new double[2];
     Random randomNumberGenerator = new Random();
 
@@ -165,7 +165,8 @@ public class HelicopterTask extends Task {
         }
 
         num_sim_steps = num_sim_steps + 1;;
-        env_terminal = env_terminal || (num_sim_steps == NUM_SIM_STEPS_PER_EPISODE);
+//        env_terminal = env_terminal || (num_sim_steps == NUM_SIM_STEPS_PER_EPISODE);
+        env_terminal = env_terminal || (num_sim_steps == 8000);
 
         return new HelicopterState(env_terminal, num_sim_steps, velocity,
                 position, angular_rate, q, noise);
@@ -198,7 +199,7 @@ public class HelicopterTask extends Task {
 
             //System.out.println("Final reward is: "+reward+" NUM_SIM_STEPS_PER_EPISODE="+HelicopterState.NUM_SIM_STEPS_PER_EPISODE +"  hs.num_sim_steps="+ hs.num_sim_steps);
         }
-        return reward;
+        return reward; //-Math.log(-reward);
     }
 
     @Override

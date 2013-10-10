@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package policy;
 
 import core.Action;
@@ -27,7 +23,7 @@ import weka.core.Instances;
  *
  * @author daq
  */
-public class RankBoostPoolPolicy extends GibbsPolicy {
+public class RankBoostPoolWithoutEXPPolicy extends GibbsPolicy {
 
     private List<Double> alphas;
     private List<Classifier> potentialFunctions;
@@ -42,28 +38,7 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
     private int uniformPoolCurSize;
     private int uniformPoolCount;
 
-    public RankBoostPoolPolicy(Random rand, int treeDepth, int bestPoolSize, int uniformPoolSize) {
-        numIteration = 0;
-        alphas = new ArrayList<Double>();
-        potentialFunctions = new ArrayList<Classifier>();
-        random = rand;
-        REPTree tree = new REPTree();
-        tree.setMaxDepth(treeDepth);
-        base = tree;
-        stepsize = 1;
-
-        this.bestPoolSize = bestPoolSize;
-        this.uniformPoolSize = uniformPoolSize;
-
-        bestPool = new Trajectory[bestPoolSize];
-        uniformPool = new Trajectory[uniformPoolSize];
-
-        bestPoolCurSize = 0;
-        uniformPoolCurSize = 0;
-        uniformPoolCount = 0;
-    }
-    
-    public RankBoostPoolPolicy(Random rand) {
+    public RankBoostPoolWithoutEXPPolicy(Random rand) {
         numIteration = 0;
         alphas = new ArrayList<Double>();
         potentialFunctions = new ArrayList<Classifier>();
@@ -329,29 +304,29 @@ public class RankBoostPoolPolicy extends GibbsPolicy {
         }
 
         // sample for best and uniform
-        {
-            // best
-            Trajectory[] allTrajectory = new Trajectory[trajectories.size() + bestPoolCurSize];
-            trajectories.toArray(allTrajectory);
-            System.arraycopy(bestPool, 0, allTrajectory, trajectories.size(), bestPoolCurSize);
-            Arrays.sort(allTrajectory);
-            bestPoolCurSize = Math.min(bestPoolSize, allTrajectory.length);
-            System.arraycopy(allTrajectory, 0, bestPool, 0, bestPoolCurSize);
-
-            for (Trajectory trajectory : trajectories) {
-                // uniform
-                if (uniformPoolCurSize < uniformPoolSize) {
-                    uniformPool[uniformPoolCurSize] = trajectory;
-                    uniformPoolCurSize++;
-                } else {
-                    int repInd = random.nextInt(uniformPoolCount);
-                    if (repInd < uniformPoolSize) {
-                        uniformPool[repInd] = trajectory;
-                    }
-                }
-                uniformPoolCount++;
-            }
-        }
+//        {
+//            // best
+//            Trajectory[] allTrajectory = new Trajectory[trajectories.size() + bestPoolCurSize];
+//            trajectories.toArray(allTrajectory);
+//            System.arraycopy(bestPool, 0, allTrajectory, trajectories.size(), bestPoolCurSize);
+//            Arrays.sort(allTrajectory);
+//            bestPoolCurSize = Math.min(bestPoolSize, allTrajectory.length);
+//            System.arraycopy(allTrajectory, 0, bestPool, 0, bestPoolCurSize);
+//
+//            for (Trajectory trajectory : trajectories) {
+//                // uniform
+//                if (uniformPoolCurSize < uniformPoolSize) {
+//                    uniformPool[uniformPoolCurSize] = trajectory;
+//                    uniformPoolCurSize++;
+//                } else {
+//                    int repInd = random.nextInt(uniformPoolCount);
+//                    if (repInd < uniformPoolSize) {
+//                        uniformPool[repInd] = trajectory;
+//                    }
+//                }
+//                uniformPoolCount++;
+//            }
+//        }
 
         double objective = 0;
         for (int i = 0; i < trainTrajectories.size(); i++) {

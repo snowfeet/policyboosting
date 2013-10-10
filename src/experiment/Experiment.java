@@ -128,9 +128,10 @@ public class Experiment {
         return results;
     }
 
-    public void conductExperimentTrainCA(Policy policy, Task task,
+    public double[][] conductExperimentTrainCA(Policy policy, Task task,
             int iteration, int trialsPerIter, State initialState, int maxStep,
             boolean isPara, Random random) {
+        double[][] results = new double[iteration][5];
         List<Trajectory> rolloutsFirst = null;
         for (int iter = 0; iter < iteration; iter++) {
             System.out.print("iter=" + iter + ", ");
@@ -162,20 +163,34 @@ public class Experiment {
             }
 
             List<Trajectory> rollouts = new ArrayList<Trajectory>();
-            double averageReward = 0, averageStep = 0;
+            double[] rewards = new double[list.size()];
+            double[] steps = new double[list.size()];
+            int cc = 0, maxStepUsed = -1;
             for (ParallelExecute run : list) {
                 Trajectory rollout = run.getRollout();
                 rollout.setProducedIteration(iter);
                 rollouts.add(rollout);
 
                 double totalReward = rollout.getRewards();
-                averageReward += totalReward;
-                averageStep += rollout.getSamples().size();
-//                   System.out.print(totalReward+" ");                
+                rewards[cc] = totalReward;
+                steps[cc] = rollout.getSamples().size();
+
+                if (steps[cc] > maxStepUsed) {
+                    maxStepUsed = rollout.getSamples().size();
+                }
+
+                cc++;
             }
-            averageReward /= list.size();
-            averageStep /= list.size();
-            System.out.println("Average Total Rewards = " + averageReward + ", Average step = " + averageStep);
+            double[] meanStdReward = Stats.mean_std(rewards);
+            double[] meanStdStep = Stats.mean_std(steps);
+            results[iter][1] = meanStdReward[0];
+            results[iter][2] = meanStdReward[1];
+            results[iter][3] = meanStdStep[0];
+            results[iter][4] = meanStdStep[1];
+            System.out.println("Average Total Rewards = " + meanStdReward[0] + ", Average step = " + meanStdStep[0] + "(" + maxStepUsed + ")");
+            
+//            if(meanStdStep[0] > 6500)
+//                break;
             // System.out.println();
             // System.out.println("collecting samples is done! Updating meta-policy...");
 
@@ -187,12 +202,14 @@ public class Experiment {
 
             policy.update(rollouts);
 
-            ParallelExecute run = new ParallelExecute(task, policy,
-                    initialState, maxStep, true, random.nextInt());
-            run.run();
-            Trajectory rollout = run.getRollout();
-            System.err.println("DDDD " + rollout.getRewards());
+//            ParallelExecute run = new ParallelExecute(task, policy,
+//                    initialState, maxStep, true, random.nextInt());
+//            run.run();
+//            Trajectory rollout = run.getRollout();
+//            System.err.println("DDDD " + rollout.getRewards());         
         }
+
+        return results;
     }
 
     public static double[] calcRolloutObjective(Trajectory rollout, GibbsPolicy policy) {
